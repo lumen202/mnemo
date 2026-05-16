@@ -5,7 +5,7 @@ import { HydrateStores } from '@/components/layout/HydrateStores'
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <HydrateStores>
-      <div className="flex h-screen bg-background overflow-hidden">
+      <div className="flex h-[100dvh] bg-background overflow-hidden">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden lg:flex">
           <TopBar />

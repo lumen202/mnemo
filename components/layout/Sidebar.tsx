@@ -66,13 +66,14 @@ export function Sidebar() {
   // Mobile drawer mode
   if (isMobile) {
     return (
+      <>
       <Dialog open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <DialogPortal>
           <DialogOverlay className="z-40" />
           <div className="fixed inset-0 z-40 pointer-events-none" />
           <div
             className={cn(
-              'fixed left-0 top-0 h-screen w-60 z-50',
+              'fixed left-0 top-0 h-[100dvh] w-60 z-50',
               'sidebar-gradient border-r border-white/[0.06]',
               'data-[state=open]:slide-in-from-left-0 data-[state=closed]:slide-out-to-left-0',
               'data-[state=open]:animate-in data-[state=closed]:animate-out',
@@ -81,7 +82,7 @@ export function Sidebar() {
             )}
             data-state={sidebarOpen ? 'open' : 'closed'}
           >
-            <div className="flex flex-col h-screen">
+            <div className="flex flex-col h-[100dvh]">
               {/* Header with close button */}
               <div className="flex items-center justify-between px-4 py-5">
                 <div className="flex items-center gap-3 flex-1">
@@ -175,6 +176,43 @@ export function Sidebar() {
           </div>
         </DialogPortal>
       </Dialog>
+
+      {/* Sign Out Confirmation Dialog — mobile */}
+      <Dialog open={signOutDialogOpen} onOpenChange={setSignOutDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Sign out of Mnemo?</DialogTitle>
+            <DialogDescription>
+              Your study data is saved and will be here when you return.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSignOutDialogOpen(false)}
+              disabled={isSigningOut}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmSignOut}
+              disabled={isSigningOut}
+              className="gap-2"
+            >
+              {isSigningOut ? (
+                <>
+                  <span className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                  Signing out...
+                </>
+              ) : (
+                'Sign out'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      </>
     )
   }
 
@@ -182,7 +220,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'relative flex flex-col h-screen border-r border-white/[0.06] sidebar-gradient',
+        'relative flex flex-col h-[100dvh] border-r border-white/[0.06] sidebar-gradient',
         'transition-all duration-300 ease-in-out hidden lg:flex',
         sidebarOpen ? 'w-60' : 'w-[72px]'
       )}
