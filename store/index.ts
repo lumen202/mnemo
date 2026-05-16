@@ -38,6 +38,7 @@ interface AuthState {
   user: User | null
   isLoading: boolean
   isAuthenticated: boolean
+  isSigningOut: boolean
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, name: string) => Promise<void>
   signOut: () => Promise<void>
@@ -48,6 +49,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isLoading: true,
   isAuthenticated: false,
+  isSigningOut: false,
 
   signIn: async (email, password) => {
     set({ isLoading: true })
@@ -98,11 +100,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signOut: async () => {
+    set({ isSigningOut: true })
     if (isSupabaseConfigured()) {
       await supabaseSignOut()
     }
     document.cookie = 'mnemo_session=; path=/; max-age=0'
-    set({ user: null, isAuthenticated: false, isLoading: false })
+    set({ user: null, isAuthenticated: false, isLoading: false, isSigningOut: false })
   },
 
   hydrate: async () => {

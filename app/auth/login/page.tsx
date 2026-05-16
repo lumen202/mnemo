@@ -8,6 +8,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/store'
 import { isSupabaseConfigured } from '@/lib/env'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 const DEMO_EMAIL = 'demo@mnemo.test'
 const DEMO_PASSWORD = 'demo123456'
@@ -21,14 +29,26 @@ export default function LoginPage() {
   const [password, setPassword] = useState(isSupabaseConfigured() ? DEMO_PASSWORD : 'demo1234')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState('')
+  const [pendingPassword, setPendingPassword] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setPendingEmail(email)
+    setPendingPassword(password)
+    setConfirmDialogOpen(true)
+  }
+
+  const confirmSignIn = async () => {
+    setConfirmDialogOpen(false)
     try {
-      await signIn(email, password)
+      await signIn(pendingEmail, pendingPassword)
       router.push('/dashboard')
     } catch {
+      setEmail(pendingEmail)
+      setPassword(pendingPassword)
       setError('Invalid credentials. Try the demo account.')
     }
   }
@@ -37,12 +57,9 @@ export default function LoginPage() {
     setEmail(e)
     setPassword(p)
     setError('')
-    try {
-      await signIn(e, p)
-      router.push('/dashboard')
-    } catch {
-      setError('Quick login failed. Is the database seeded?')
-    }
+    setPendingEmail(e)
+    setPendingPassword(p)
+    setConfirmDialogOpen(true)
   }
 
   return (
@@ -192,6 +209,43 @@ export default function LoginPage() {
             Sign up free
           </Link>
         </p>
+
+        {/* Sign In Confirmation Dialog */}
+        <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Sign in as {pendingEmail.split('@')[0]}?</DialogTitle>
+              <DialogDescription>
+                You will be signed into your Mnemo study dashboard.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setConfirmDialogOpen(false)}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmSignIn}
+                disabled={isLoading}
+                className="gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <span className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign in <ArrowRight size={16} />
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
