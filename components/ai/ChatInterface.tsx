@@ -6,10 +6,38 @@ import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { AssistantMessage } from './AssistantMessage'
 import { TypingIndicator } from './TypingIndicator'
-import { useAIStore } from '@/store'
+import { useAIStore, useFlashcardStore } from '@/store'
 import { SUGGESTED_QUESTIONS } from '@/data/mockData'
 import { cn } from '@/lib/utils'
-import type { TutorResponse } from '@/services/ai/types'
+import type { TutorResponse, FlashcardResponse } from '@/services/ai/types'
+import type { SubjectId } from '@/types'
+
+function detectFlashcardIntent(msg: string): { isFlashcard: boolean; topic: string | null } {
+  const m = msg.toLowerCase()
+  if (!/flash\s*card/.test(m) && !/(?:generate|create|make)\s+(?:some\s+)?cards?/.test(m)) {
+    return { isFlashcard: false, topic: null }
+  }
+  const topicMatch =
+    msg.match(/flash\s*cards?\s+(?:on|for|about|covering|of)\s+(.+)/i) ||
+    msg.match(/(?:generate|create|make)\s+\w+\s+flash\s*cards?\s+(?:on|for|about)\s+(.+)/i) ||
+    msg.match(/(?:on|about|for)\s+(.+?)\s+flash\s*cards?/i)
+  return { isFlashcard: true, topic: topicMatch?.[1]?.trim() ?? null }
+}
+
+function mapTopicToSubject(topic: string): SubjectId {
+  const t = topic.toLowerCase()
+  if (/math|calculus|algebra|geometry|trig|statistic|probability/.test(t)) return 'mathematics'
+  if (/computer|programm|algorithm|data.?struct|software|cod|network/.test(t)) return 'computer-science'
+  if (/physics|quantum|mechanic|thermodynamic|electro|relativity/.test(t)) return 'physics'
+  if (/machine.?learn|deep.?learn|neural|transformer|\bml\b|artificial.?intelligence/.test(t)) return 'machine-learning'
+  if (/bio|cell|genetic|dna|evolution|anatomy|organism/.test(t)) return 'biology'
+  if (/chem|organic|periodic|molecular|reaction|compound/.test(t)) return 'chemistry'
+  if (/histor|war|empire|civilization|revolution|ancient/.test(t)) return 'history'
+  if (/econom|market|supply|demand|macro|micro|gdp|inflation/.test(t)) return 'economics'
+  if (/philosoph|ethics|logic|metaphys|epistemol|existential/.test(t)) return 'philosophy'
+  if (/literatur|poem|poetry|novel|essay|fiction|writing/.test(t)) return 'literature'
+  return 'other'
+}
 
 // Remove <think>...</think> blocks that Qwen3 models emit.
 // Strips complete blocks and hides any in-progress (unclosed) block during streaming.
@@ -22,8 +50,10 @@ function stripThinking(text: string): string {
 
 export function ChatInterface() {
   const { messages, isTyping, addMessage, updateMessage, setTyping, clearChat } = useAIStore()
+  const { addFlashcard } = useFlashcardStore()
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
+  const [flashcardState, setFlashcardState] = useState<null | 'awaiting_topic'>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -32,6 +62,42 @@ export function ChatInterface() {
       scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
     }
   }, [messages, isTyping])
+
+  const generateFlashcardsForTopic = async (topic: string) => {
+    const subject = mapTopicToSubject(topic)
+    const assistantId = `msg_${Date.now() + 1}`
+    addMessage({ id: assistantId, role: 'assistant', content: '…', timestamp: new Date().toISOString() })
+    setTyping(true)
+
+    try {
+      const res = await fetch('/api/ai/flashcards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject, content: topic, count: 6 }),
+      })
+      if (!res.ok) throw new Error('Generation failed')
+
+      const data: FlashcardResponse = await res.json()
+      const cards = data.flashcards ?? []
+
+      // set() inside addFlashcard is synchronous — cards land in Zustand immediately.
+      // Supabase writes are best-effort; errors here must not block the success message.
+      cards.forEach((fc) =>
+        addFlashcard({ subjectId: data.subject, front: fc.front, back: fc.back, difficulty: fc.difficulty, timesReviewed: 0 })
+          .catch(() => {})
+      )
+
+      updateMessage(
+        assistantId,
+        `I've generated **${cards.length} flashcards** on *${topic}* and added them to your deck!\n\n[→ View your flashcards](/flashcards)`
+      )
+    } catch {
+      updateMessage(assistantId, 'I had trouble generating flashcards. Please try again or visit the Flashcards page directly.')
+    } finally {
+      setTyping(false)
+      setFlashcardState(null)
+    }
+  }
 
   const sendMessage = async (content: string) => {
     if (!content.trim() || isTyping || isStreaming) return
@@ -43,6 +109,32 @@ export function ChatInterface() {
       timestamp: new Date().toISOString(),
     })
     setInput('')
+
+    // ── Flashcard topic reply ────────────────────────────────────────────────
+    if (flashcardState === 'awaiting_topic') {
+      setFlashcardState(null)
+      await generateFlashcardsForTopic(content.trim())
+      return
+    }
+
+    // ── Flashcard intent detection ───────────────────────────────────────────
+    const { isFlashcard, topic } = detectFlashcardIntent(content.trim())
+    if (isFlashcard) {
+      if (topic) {
+        await generateFlashcardsForTopic(topic)
+      } else {
+        addMessage({
+          id: `msg_${Date.now() + 1}`,
+          role: 'assistant',
+          content: `Sure! What subject or topic would you like me to create flashcards for?\n\nFor example: *Calculus integration techniques*, *Binary Search Trees*, *Cell Biology*, *World War II* — just tell me the topic and I'll generate a deck for you.`,
+          timestamp: new Date().toISOString(),
+        })
+        setFlashcardState('awaiting_topic')
+      }
+      return
+    }
+
+    // ── Normal AI chat ───────────────────────────────────────────────────────
     setTyping(true)
 
     const assistantId = `msg_${Date.now() + 1}`

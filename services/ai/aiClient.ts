@@ -10,6 +10,7 @@ export interface Message {
 
 export interface ChatOptions {
   model?: ModelId | string
+  fallbackModel?: ModelId | string
   maxTokens?: number
   temperature?: number
   timeoutMs?: number
@@ -132,26 +133,20 @@ export async function chat(messages: Message[], opts: ChatOptions = {}): Promise
     }
   }
 
+  if (opts.fallbackModel && opts.fallbackModel !== opts.model) {
+    return callOnce(messages, { ...opts, model: opts.fallbackModel, fallbackModel: undefined })
+  }
+
   throw lastErr
 }
 
-// Streams tokens from OpenRouter as an async generator. Caller receives raw
-// content delta strings; caller is responsible for stripping think-tags.
-export async function* chatStream(
-  messages: Message[],
-  opts: ChatOptions = {}
-): AsyncGenerator<string> {
-  checkRateLimit()
-
-  const model = opts.model ?? getDefaultModel('tutoring')
+async function openStream(model: string, messages: Message[], opts: ChatOptions): Promise<Response> {
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS
-
   const controller = new AbortController()
   const timerId = setTimeout(() => controller.abort(), timeoutMs)
 
-  let res: Response
   try {
-    res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
+    return await fetch(`${OPENROUTER_BASE}/chat/completions`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${getApiKey()}`,
@@ -162,7 +157,7 @@ export async function* chatStream(
       body: JSON.stringify({
         model,
         messages,
-        max_tokens: opts.maxTokens ?? 1024,
+        max_tokens: opts.maxTokens ?? 512,
         temperature: opts.temperature ?? 0.7,
         stream: true,
       }),
@@ -170,6 +165,24 @@ export async function* chatStream(
     })
   } finally {
     clearTimeout(timerId)
+  }
+}
+
+// Streams tokens from OpenRouter as an async generator. Caller receives raw
+// content delta strings; caller is responsible for stripping think-tags.
+// Falls back to opts.fallbackModel if the primary request returns a non-2xx.
+export async function* chatStream(
+  messages: Message[],
+  opts: ChatOptions = {}
+): AsyncGenerator<string> {
+  checkRateLimit()
+
+  const primaryModel = opts.model ?? getDefaultModel('tutoring')
+
+  let res = await openStream(primaryModel, messages, opts)
+
+  if (!res.ok && opts.fallbackModel && opts.fallbackModel !== primaryModel) {
+    res = await openStream(opts.fallbackModel, messages, opts)
   }
 
   if (!res.ok) {

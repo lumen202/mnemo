@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
         try {
           for await (const token of aiClient.chatStream(messages, {
             model: getDefaultModel('tutoring'),
-            maxTokens: 1024,
+            maxTokens: 512,
             temperature: 0.7,
           })) {
             controller.enqueue(encoder.encode(token))

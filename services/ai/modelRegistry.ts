@@ -2,17 +2,18 @@
 
 export const MODEL_IDS = {
   // OpenRouter free router — dispatches to available free models automatically
-  openrouterFree: 'openrouter/free',
-  // Specific free models (kept for reference / manual override)
-  qwen3Next80b: 'qwen/qwen3-next-80b-a3b-instruct:free',
-  qwen32b:      'qwen/qwen3-32b:free',
-  deepseek:     'deepseek/deepseek-chat:free',
-  geminiFlash:  'google/gemini-flash-1.5',
-  gptOss120b:   'openai/gpt-oss-120b:free',
+  openrouterFree:    'openrouter/free',
+  // Specific free models
+  deepseekV4Flash:   'deepseek/deepseek-v4-flash:free',
+  qwen3Next80b:      'qwen/qwen3-next-80b-a3b-instruct:free',
+  qwen32b:           'qwen/qwen3-32b:free',
+  deepseek:          'deepseek/deepseek-chat:free',
+  geminiFlash:       'google/gemini-flash-1.5',
+  gptOss120b:        'openai/gpt-oss-120b:free',
   // Premium tier — swap in when ready
-  gpt4oMini:    'openai/gpt-4o-mini',
-  claudeHaiku:  'anthropic/claude-haiku-4-5-20251001',
-  claudeSonnet: 'anthropic/claude-sonnet-4-6',
+  gpt4oMini:         'openai/gpt-4o-mini',
+  claudeHaiku:       'anthropic/claude-haiku-4-5-20251001',
+  claudeSonnet:      'anthropic/claude-sonnet-4-6',
 } as const
 
 export type ModelId = (typeof MODEL_IDS)[keyof typeof MODEL_IDS]
@@ -35,12 +36,21 @@ export interface ModelConfig {
 
 export const MODEL_REGISTRY: ModelConfig[] = [
   {
+    id: MODEL_IDS.deepseekV4Flash,
+    label: 'DeepSeek V4 Flash',
+    tier: 'free',
+    contextWindow: 163840,
+    strengths: ['speed', 'instruction-following', 'reasoning', 'pedagogy'],
+    defaultFor: [],
+    notes: 'Fast free model — good tutoring alternative if openrouter/free is slow',
+  },
+  {
     id: MODEL_IDS.qwen3Next80b,
     label: 'Qwen3 Next 80B (MoE)',
     tier: 'free',
     contextWindow: 128000,
     strengths: ['reasoning', 'instruction-following', 'speed', 'long-form', 'pedagogy'],
-    defaultFor: ['tutoring'],
+    defaultFor: [],
     notes: 'MoE architecture (~3B active params) — fast inference, strong reasoning, free tier',
   },
   {
@@ -110,8 +120,9 @@ export const MODEL_REGISTRY: ModelConfig[] = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-export function getDefaultModel(_task: TaskType): ModelId {
-  return MODEL_IDS.openrouterFree
+export function getDefaultModel(task: TaskType): ModelId {
+  const match = MODEL_REGISTRY.find((m) => m.defaultFor.includes(task))
+  return match?.id ?? MODEL_IDS.openrouterFree
 }
 
 export function getModelConfig(id: string): ModelConfig | undefined {

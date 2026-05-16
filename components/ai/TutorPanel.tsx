@@ -109,7 +109,7 @@ export function TutorPanel() {
                   <p className={cn('text-xs font-medium truncate', active ? 'text-indigo-300' : 'text-foreground')}>
                     {session.title}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                  <p className="text-[10px] text-muted-foreground mt-0.5" suppressHydrationWarning>
                     {session.messages.length} msg{session.messages.length !== 1 ? 's' : ''} · {relativeTime(session.createdAt)}
                   </p>
                 </div>

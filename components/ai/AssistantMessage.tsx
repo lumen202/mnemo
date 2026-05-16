@@ -1,4 +1,5 @@
-import { cn } from '@/lib/utils'
+'use client'
+import { useRouter } from 'next/navigation'
 import { formatRelativeTime } from '@/utils/formatters'
 import type { ChatMessage } from '@/types'
 
@@ -15,13 +16,17 @@ function inlineFormat(text: string): string {
     .replace(/`([^`]+)`/g, '<code class="bg-white/10 rounded px-1 py-0.5 text-xs font-mono text-indigo-300">$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
     .replace(/\*([^*]+)\*/g, '<em class="text-foreground/80">$1</em>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, linkText, href) => {
+      const safe = href.startsWith('/') || href.startsWith('https://')
+      if (!safe) return `[${linkText}](${href})`
+      return `<a href="${href}" class="inline-flex items-center gap-1 font-semibold text-indigo-400 bg-indigo-500/15 border border-indigo-500/30 rounded-lg px-2.5 py-1 text-xs hover:bg-indigo-500/25 hover:text-indigo-300 transition-colors">${linkText}</a>`
+    })
 }
 
 function renderMarkdown(text: string): string {
   const lines = text.split('\n')
   const result: string[] = []
   let inCodeBlock = false
-  let codeLang = ''
   let codeLines: string[] = []
 
   const flushCode = () => {
@@ -29,7 +34,6 @@ function renderMarkdown(text: string): string {
       `<pre class="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 my-2 overflow-x-auto text-xs font-mono text-foreground/80 whitespace-pre">${escHtml(codeLines.join('\n'))}</pre>`
     )
     codeLines = []
-    codeLang = ''
   }
 
   for (const line of lines) {
@@ -40,7 +44,6 @@ function renderMarkdown(text: string): string {
         inCodeBlock = false
       } else {
         inCodeBlock = true
-        codeLang = fenceMatch[1]
       }
       continue
     }
@@ -95,7 +98,18 @@ function renderMarkdown(text: string): string {
 }
 
 export function AssistantMessage({ message }: AssistantMessageProps) {
+  const router = useRouter()
   const isUser = message.role === 'user'
+
+  const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const anchor = (e.target as HTMLElement).closest('a')
+    if (!anchor) return
+    const href = anchor.getAttribute('href')
+    if (href?.startsWith('/')) {
+      e.preventDefault()
+      router.push(href)
+    }
+  }
 
   if (isUser) {
     return (
@@ -104,7 +118,7 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
           <div className="bg-indigo-500/20 border border-indigo-500/30 rounded-2xl rounded-tr-sm px-4 py-3">
             <p className="text-sm text-foreground leading-relaxed">{message.content}</p>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-1 text-right">
+          <p className="text-[10px] text-muted-foreground mt-1 text-right" suppressHydrationWarning>
             {formatRelativeTime(message.timestamp)}
           </p>
         </div>
@@ -131,10 +145,11 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
             <div
               className="text-sm text-foreground/90 leading-relaxed prose-invert"
               dangerouslySetInnerHTML={{ __html: renderMarkdown(message.content) }}
+              onClick={handleContentClick}
             />
           )}
         </div>
-        <p className="text-[10px] text-muted-foreground mt-1">
+        <p className="text-[10px] text-muted-foreground mt-1" suppressHydrationWarning>
           Mnemo · {formatRelativeTime(message.timestamp)}
         </p>
       </div>
