@@ -6,11 +6,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { AssistantMessage } from './AssistantMessage'
 import { TypingIndicator } from './TypingIndicator'
-import { useAIStore, useFlashcardStore } from '@/store'
+import { useAIStore, useFlashcardStore, useQuizStore } from '@/store'
 import { SUGGESTED_QUESTIONS } from '@/data/mockData'
 import { cn } from '@/lib/utils'
-import type { TutorResponse, FlashcardResponse } from '@/services/ai/types'
-import type { SubjectId } from '@/types'
+import type { TutorResponse, FlashcardResponse, QuizResponse } from '@/services/ai/types'
+import type { SubjectId, Quiz } from '@/types'
 
 function detectFlashcardIntent(msg: string): { isFlashcard: boolean; topic: string | null } {
   const m = msg.toLowerCase()
@@ -22,6 +22,19 @@ function detectFlashcardIntent(msg: string): { isFlashcard: boolean; topic: stri
     msg.match(/(?:generate|create|make)\s+\w+\s+flash\s*cards?\s+(?:on|for|about)\s+(.+)/i) ||
     msg.match(/(?:on|about|for)\s+(.+?)\s+flash\s*cards?/i)
   return { isFlashcard: true, topic: topicMatch?.[1]?.trim() ?? null }
+}
+
+function detectQuizIntent(msg: string): { isQuiz: boolean; topic: string | null } {
+  const m = msg.toLowerCase()
+  if (!/quiz|test\s+me|make\s+(?:a\s+)?(?:practice\s+)?(?:test|exam)|(?:generate|create)\s+(?:a\s+)?(?:practice\s+)?(?:test|exam|quiz)/.test(m)) {
+    return { isQuiz: false, topic: null }
+  }
+  const topicMatch =
+    msg.match(/quiz\s+(?:on|for|about|covering|of)\s+(.+)/i) ||
+    msg.match(/(?:generate|create|make)\s+\w+\s+quiz\s+(?:on|for|about)\s+(.+)/i) ||
+    msg.match(/(?:test|exam)\s+(?:on|for|about|covering)\s+(.+)/i) ||
+    msg.match(/test\s+me\s+on\s+(.+)/i)
+  return { isQuiz: true, topic: topicMatch?.[1]?.trim() ?? null }
 }
 
 function mapTopicToSubject(topic: string): SubjectId {
@@ -51,9 +64,10 @@ function stripThinking(text: string): string {
 export function ChatInterface() {
   const { messages, isTyping, addMessage, updateMessage, setTyping, clearChat } = useAIStore()
   const { addFlashcard } = useFlashcardStore()
+  const { addQuiz } = useQuizStore()
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
-  const [flashcardState, setFlashcardState] = useState<null | 'awaiting_topic'>(null)
+  const [pendingIntent, setPendingIntent] = useState<null | 'awaiting_flashcard_topic' | 'awaiting_quiz_topic'>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -97,7 +111,56 @@ export function ChatInterface() {
       updateMessage(assistantId, `I had trouble generating flashcards: ${msg}. Please try again or visit the Flashcards page to generate them directly.`)
     } finally {
       setTyping(false)
-      setFlashcardState(null)
+      setPendingIntent(null)
+    }
+  }
+
+  const generateQuizForTopic = async (topic: string) => {
+    const subject = mapTopicToSubject(topic)
+    const assistantId = `msg_${Date.now() + 1}`
+    addMessage({ id: assistantId, role: 'assistant', content: '…', timestamp: new Date().toISOString() })
+    setTyping(true)
+
+    try {
+      const res = await fetch('/api/ai/quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject, content: topic, count: 5 }),
+      })
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: 'Generation failed' }))
+        throw new Error(errBody.error ?? `HTTP ${res.status}`)
+      }
+
+      const data: QuizResponse = await res.json()
+      const quiz: Quiz = {
+        id: `quiz_${Date.now()}`,
+        userId: 'user_demo',
+        subjectId: data.subject,
+        title: data.title,
+        totalQuestions: data.questions.length,
+        createdAt: new Date().toISOString(),
+        questions: data.questions.map((q, i) => ({
+          id: `q_gen_${Date.now()}_${i}`,
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation,
+        })),
+      }
+
+      addQuiz(quiz).catch(() => {})
+
+      updateMessage(
+        assistantId,
+        `I've generated a **${data.questions.length}-question quiz** on *${topic}*!\n\n[→ Go to Quizzes](/quizzes)`
+      )
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Generation failed'
+      updateMessage(assistantId, `I had trouble generating the quiz: ${msg}. Please try again or visit the Quizzes page to generate one directly.`)
+    } finally {
+      setTyping(false)
+      setPendingIntent(null)
     }
   }
 
@@ -112,18 +175,23 @@ export function ChatInterface() {
     })
     setInput('')
 
-    // ── Flashcard topic reply ────────────────────────────────────────────────
-    if (flashcardState === 'awaiting_topic') {
-      setFlashcardState(null)
+    // ── Pending topic replies ────────────────────────────────────────────────
+    if (pendingIntent === 'awaiting_flashcard_topic') {
+      setPendingIntent(null)
       await generateFlashcardsForTopic(content.trim())
+      return
+    }
+    if (pendingIntent === 'awaiting_quiz_topic') {
+      setPendingIntent(null)
+      await generateQuizForTopic(content.trim())
       return
     }
 
     // ── Flashcard intent detection ───────────────────────────────────────────
-    const { isFlashcard, topic } = detectFlashcardIntent(content.trim())
+    const { isFlashcard, topic: flashcardTopic } = detectFlashcardIntent(content.trim())
     if (isFlashcard) {
-      if (topic) {
-        await generateFlashcardsForTopic(topic)
+      if (flashcardTopic) {
+        await generateFlashcardsForTopic(flashcardTopic)
       } else {
         addMessage({
           id: `msg_${Date.now() + 1}`,
@@ -131,7 +199,24 @@ export function ChatInterface() {
           content: `Sure! What subject or topic would you like me to create flashcards for?\n\nFor example: *Calculus integration techniques*, *Binary Search Trees*, *Cell Biology*, *World War II* — just tell me the topic and I'll generate a deck for you.`,
           timestamp: new Date().toISOString(),
         })
-        setFlashcardState('awaiting_topic')
+        setPendingIntent('awaiting_flashcard_topic')
+      }
+      return
+    }
+
+    // ── Quiz intent detection ────────────────────────────────────────────────
+    const { isQuiz, topic: quizTopic } = detectQuizIntent(content.trim())
+    if (isQuiz) {
+      if (quizTopic) {
+        await generateQuizForTopic(quizTopic)
+      } else {
+        addMessage({
+          id: `msg_${Date.now() + 1}`,
+          role: 'assistant',
+          content: `Sure! What subject or topic would you like me to quiz you on?\n\nFor example: *Calculus derivatives*, *Binary Trees*, *Cell Biology*, *World War II* — just tell me the topic and I'll build a quiz for you.`,
+          timestamp: new Date().toISOString(),
+        })
+        setPendingIntent('awaiting_quiz_topic')
       }
       return
     }

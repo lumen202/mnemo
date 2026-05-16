@@ -3,11 +3,18 @@ import { useState } from 'react'
 import { CircleHelp, Sparkles, CheckCircle, XCircle, Trophy, RotateCcw, ChevronRight, Loader2 } from 'lucide-react'
 import { GlassCard } from '@/components/common/GlassCard'
 import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useQuizStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
 import { cn } from '@/lib/utils'
-import type { Quiz } from '@/types'
+import type { Quiz, SubjectId } from '@/types'
 import type { QuizResponse } from '@/services/ai/types'
+
+const SUBJECT_OPTIONS: SubjectId[] = [
+  'mathematics', 'computer-science', 'physics', 'machine-learning',
+  'biology', 'chemistry', 'history', 'economics', 'philosophy', 'literature', 'other',
+]
 
 function QuizPlayer({ quiz, onFinish }: { quiz: Quiz; onFinish: (score: number) => void }) {
   const [questionIndex, setQuestionIndex] = useState(0)
@@ -159,25 +166,28 @@ function QuizResult({ quiz, score, onRetry }: { quiz: Quiz; score: number; onRet
 
 function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) {
   const { addQuiz } = useQuizStore()
+  const [subject, setSubject] = useState<SubjectId>('computer-science')
+  const [topic, setTopic] = useState('')
+  const [count, setCount] = useState(5)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleGenerate = async () => {
+    if (!topic.trim()) return
     setIsGenerating(true)
-    setError(false)
+    setError(null)
 
     try {
       const res = await fetch('/api/ai/quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject: 'computer-science',
-          content: 'Data structures and algorithms: complexity analysis, binary search, dynamic programming, sorting, trees, graphs, hash tables.',
-          count: 5,
-        }),
+        body: JSON.stringify({ subject, content: topic.trim(), count }),
       })
 
-      if (!res.ok) throw new Error('Generation failed')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: 'Generation failed' }))
+        throw new Error(errBody.error ?? `HTTP ${res.status}`)
+      }
 
       const data: QuizResponse = await res.json()
 
@@ -197,10 +207,11 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
         })),
       }
 
-      addQuiz(quiz)
+      addQuiz(quiz).catch(() => {})
       onGenerated(quiz)
-    } catch {
-      setError(true)
+      setTopic('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Generation failed')
     } finally {
       setIsGenerating(false)
     }
@@ -208,27 +219,75 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
 
   return (
     <GlassCard className="p-5" glow="indigo">
-      <div className="flex items-center gap-4">
-        <div className="w-9 h-9 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
-          <Sparkles className="w-4.5 h-4.5 text-indigo-400" />
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
+          <Sparkles className="w-4 h-4 text-indigo-400" />
         </div>
-        <div className="flex-1">
+        <div>
           <h3 className="text-sm font-semibold text-foreground">AI Quiz Generator</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {error
-              ? 'Generation failed. Please try again.'
-              : 'Choose a study material or subject and Mnemo will generate a targeted multiple-choice quiz to test your knowledge.'}
-          </p>
+          <p className="text-xs text-muted-foreground">Select a subject and describe the topic — Mnemo will build a targeted multiple-choice quiz.</p>
         </div>
-        <Button
-          size="sm"
-          className="gap-1.5 shrink-0"
-          onClick={handleGenerate}
-          disabled={isGenerating}
-        >
-          {isGenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-          {isGenerating ? 'Generating...' : 'Generate Quiz'}
-        </Button>
+      </div>
+
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-medium text-muted-foreground">Subject</label>
+            <Select value={subject} onValueChange={(v) => setSubject(v as SubjectId)}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SUBJECT_OPTIONS.map((s) => (
+                  <SelectItem key={s} value={s}>{SUBJECT_META[s]?.label ?? s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-medium text-muted-foreground">Number of questions</label>
+            <Select value={String(count)} onValueChange={(v) => setCount(Number(v))}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[3, 5, 8, 10].map((n) => (
+                  <SelectItem key={n} value={String(n)}>{n} questions</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-medium text-muted-foreground">Topic / content to quiz on</label>
+          <Textarea
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="e.g. Dynamic programming, Photosynthesis, French Revolution causes, Derivatives and integrals..."
+            className="h-20 text-sm resize-none"
+            disabled={isGenerating}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault()
+                handleGenerate()
+              }
+            }}
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            size="sm"
+            className="gap-1.5"
+            onClick={handleGenerate}
+            disabled={isGenerating || !topic.trim()}
+          >
+            {isGenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+            {isGenerating ? 'Generating...' : 'Generate Quiz'}
+          </Button>
+          {error && <span className="text-xs text-rose-400">{error}</span>}
+        </div>
       </div>
     </GlassCard>
   )
