@@ -1,20 +1,18 @@
 'use client'
-import { Moon, Sun, Monitor } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import { useUIStore, type Theme } from '@/store'
 import { cn } from '@/lib/utils'
 
-const CYCLE: Theme[] = ['dark', 'light', 'system']
+const CYCLE: Theme[] = ['dark', 'light']
 
 const ICONS: Record<Theme, React.ElementType> = {
   dark: Moon,
   light: Sun,
-  system: Monitor,
 }
 
 const LABELS: Record<Theme, string> = {
   dark: 'Dark',
   light: 'Light',
-  system: 'System',
 }
 
 interface ThemeToggleProps {

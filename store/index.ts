@@ -225,7 +225,7 @@ export const useAIStore = create<AIState>((set) => ({
 
 // ─── UI Store ──────────────────────────────────────────────────────────────────
 
-export type Theme = 'dark' | 'light' | 'system'
+export type Theme = 'dark' | 'light'
 
 interface UIState {
   sidebarOpen: boolean
