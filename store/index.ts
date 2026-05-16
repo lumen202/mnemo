@@ -54,6 +54,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (isSupabaseConfigured()) {
       const data = await signInWithEmail(email, password)
       const user = data.user
+      document.cookie = `mnemo_session=${data.session?.access_token ?? 'supabase'}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
       set({
         isLoading: false,
         isAuthenticated: true,
@@ -77,6 +78,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (isSupabaseConfigured()) {
       const data = await signUpWithEmail(email, password, name)
       const user = data.user
+      document.cookie = `mnemo_session=${data.session?.access_token ?? 'supabase'}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
       set({
         isLoading: false,
         isAuthenticated: true,
