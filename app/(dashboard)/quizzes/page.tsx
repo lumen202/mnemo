@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { CircleHelp, Sparkles, CheckCircle, XCircle, Trophy, RotateCcw, ChevronRight, Loader2 } from 'lucide-react'
+import { CircleHelp, Sparkles, CheckCircle, XCircle, Trophy, RotateCcw, ChevronRight, Loader2, LayoutGrid, Layers, BookOpen } from 'lucide-react'
 import { GlassCard } from '@/components/common/GlassCard'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -335,11 +335,190 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
   )
 }
 
+// ─── Quiz Card ────────────────────────────────────────────────────────────────
+
+function QuizCard({ quiz, onStart }: { quiz: Quiz; onStart: (quiz: Quiz) => void }) {
+  const meta = SUBJECT_META[quiz.subjectId]
+  const score = quiz.score
+  const isCompleted = score !== undefined
+  const scoreColor = !isCompleted ? '' : score >= 90 ? 'text-emerald-400' : score >= 70 ? 'text-indigo-400' : 'text-amber-400'
+
+  return (
+    <GlassCard className="p-5 flex flex-col gap-4 glass-hover card-shine">
+      <div className="flex items-start justify-between">
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: (meta?.color ?? '#6366f1') + '25', color: meta?.color ?? '#6366f1' }}
+        >
+          <CircleHelp size={16} />
+        </div>
+        {isCompleted && (
+          <div className={cn('text-lg font-bold tabular-nums', scoreColor)}>
+            {score}%
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-foreground mb-1">{quiz.title}</h3>
+        <p className="text-xs text-muted-foreground">{meta?.label} · {quiz.totalQuestions} questions</p>
+      </div>
+
+      <div className="flex items-center justify-between pt-1 border-t border-white/[0.05]">
+        <span className="text-[10px] text-muted-foreground">
+          {isCompleted
+            ? `Completed ${new Date(quiz.completedAt!).toLocaleDateString()}`
+            : `Created ${new Date(quiz.createdAt).toLocaleDateString()}`}
+        </span>
+        <Button
+          size="sm"
+          variant={isCompleted ? 'outline' : 'default'}
+          className="h-7 text-xs px-3 gap-1"
+          onClick={() => onStart(quiz)}
+        >
+          {isCompleted ? 'Retake' : 'Start'}
+          <ChevronRight size={11} />
+        </Button>
+      </div>
+    </GlassCard>
+  )
+}
+
+// ─── Grouped by Subject ────────────────────────────────────────────────────────
+
+function QuizzesGroupedBySubject({ quizzes, onStart }: { quizzes: Quiz[]; onStart: (quiz: Quiz) => void }) {
+  const grouped: Record<string, Quiz[]> = {}
+  quizzes.forEach((q) => {
+    const key = q.subjectId
+    if (!grouped[key]) grouped[key] = []
+    grouped[key].push(q)
+  })
+
+  const sorted = Object.entries(grouped).sort(([, a], [, b]) => b.length - a.length)
+
+  return (
+    <div className="space-y-6">
+      {sorted.map(([subjectId, groupQuizzes]) => {
+        const meta = SUBJECT_META[subjectId]
+        const completedCount = groupQuizzes.filter((q) => q.score !== undefined).length
+        return (
+          <div key={subjectId}>
+            <div className="flex items-center gap-3 mb-3">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: (meta?.color ?? '#6366f1') + '20', color: meta?.color ?? '#6366f1' }}
+              >
+                <CircleHelp size={14} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">{meta?.label ?? subjectId}</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  {groupQuizzes.length} quiz{groupQuizzes.length !== 1 ? 'zes' : ''} · {completedCount} completed
+                </p>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {groupQuizzes.map((quiz) => (
+                <QuizCard key={quiz.id} quiz={quiz} onStart={onStart} />
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Grouped by Material ───────────────────────────────────────────────────────
+
+function QuizzesGroupedByMaterial({
+  quizzes,
+  materials,
+  onStart,
+}: {
+  quizzes: Quiz[]
+  materials: StudyMaterial[]
+  onStart: (quiz: Quiz) => void
+}) {
+  const materialMap = new Map(materials.map((m) => [m.id, m]))
+  const grouped: Record<string, Quiz[]> = {}
+  const ungrouped: Quiz[] = []
+
+  quizzes.forEach((q) => {
+    if (q.materialId && materialMap.has(q.materialId)) {
+      if (!grouped[q.materialId]) grouped[q.materialId] = []
+      grouped[q.materialId].push(q)
+    } else {
+      ungrouped.push(q)
+    }
+  })
+
+  const sorted = Object.entries(grouped).sort(([, a], [, b]) => b.length - a.length)
+
+  return (
+    <div className="space-y-6">
+      {sorted.map(([materialId, groupQuizzes]) => {
+        const mat = materialMap.get(materialId)
+        const meta = mat ? SUBJECT_META[mat.subject] : null
+        const completedCount = groupQuizzes.filter((q) => q.score !== undefined).length
+        return (
+          <div key={materialId}>
+            <div className="flex items-center gap-3 mb-3">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: (meta?.color ?? '#6366f1') + '20', color: meta?.color ?? '#6366f1' }}
+              >
+                <BookOpen size={14} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">{mat?.title ?? materialId}</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  {meta?.label ?? 'Unknown'} · {groupQuizzes.length} quiz{groupQuizzes.length !== 1 ? 'zes' : ''} · {completedCount} completed
+                </p>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {groupQuizzes.map((quiz) => (
+                <QuizCard key={quiz.id} quiz={quiz} onStart={onStart} />
+              ))}
+            </div>
+          </div>
+        )
+      })}
+
+      {ungrouped.length > 0 && (
+        <div>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white/5 text-muted-foreground">
+              <Layers size={14} />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Ungrouped</h3>
+              <p className="text-[11px] text-muted-foreground">
+                {ungrouped.length} quiz{ungrouped.length !== 1 ? 'zes' : ''} · no linked material
+              </p>
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {ungrouped.map((quiz) => (
+              <QuizCard key={quiz.id} quiz={quiz} onStart={onStart} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
+
+type ViewMode = 'all' | 'by-subject' | 'by-material'
 
 export default function QuizzesPage() {
   const { quizzes, activeQuiz, setActiveQuiz, updateQuizScore } = useQuizStore()
+  const { materials } = useStudyMaterialStore()
   const [completedScore, setCompletedScore] = useState<number | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('all')
 
   const handleFinish = (score: number) => {
     if (activeQuiz) {
@@ -407,57 +586,47 @@ export default function QuizzesPage() {
 
       <GenerateBanner onGenerated={handleGenerated} />
 
+      {/* View mode toggle */}
+      <div className="flex items-center gap-3">
+        <h2 className="text-sm font-semibold text-foreground">Your Quizzes</h2>
+        <div className="flex items-center rounded-xl border border-white/[0.08] bg-white/[0.02] p-0.5 ml-auto">
+          {([
+            { id: 'all' as const, label: 'All', icon: LayoutGrid },
+            { id: 'by-subject' as const, label: 'By Subject', icon: Layers },
+            { id: 'by-material' as const, label: 'By Material', icon: BookOpen },
+          ]).map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setViewMode(id)}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+                viewMode === id
+                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                  : 'text-muted-foreground hover:text-foreground border border-transparent'
+              )}
+            >
+              <Icon size={13} />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Quiz list */}
       <div>
-        <h2 className="text-sm font-semibold text-foreground mb-4">Your Quizzes</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {quizzes.map((quiz) => {
-            const meta = SUBJECT_META[quiz.subjectId]
-            const score = quiz.score
-            const isCompleted = score !== undefined
-            const scoreColor = !isCompleted ? '' : score >= 90 ? 'text-emerald-400' : score >= 70 ? 'text-indigo-400' : 'text-amber-400'
+        {viewMode === 'all' && (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {quizzes.map((quiz) => (
+              <QuizCard key={quiz.id} quiz={quiz} onStart={handleStart} />
+            ))}
+          </div>
+        )}
 
-            return (
-              <GlassCard key={quiz.id} className="p-5 flex flex-col gap-4 glass-hover card-shine">
-                <div className="flex items-start justify-between">
-                  <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: (meta?.color ?? '#6366f1') + '25', color: meta?.color ?? '#6366f1' }}
-                  >
-                    <CircleHelp size={16} />
-                  </div>
-                  {isCompleted && (
-                    <div className={cn('text-lg font-bold tabular-nums', scoreColor)}>
-                      {score}%
-                    </div>
-                  )}
-                </div>
+        {viewMode === 'by-subject' && <QuizzesGroupedBySubject quizzes={quizzes} onStart={handleStart} />}
 
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground mb-1">{quiz.title}</h3>
-                  <p className="text-xs text-muted-foreground">{meta?.label} · {quiz.totalQuestions} questions</p>
-                </div>
-
-                <div className="flex items-center justify-between pt-1 border-t border-white/[0.05]">
-                  <span className="text-[10px] text-muted-foreground">
-                    {isCompleted
-                      ? `Completed ${new Date(quiz.completedAt!).toLocaleDateString()}`
-                      : `Created ${new Date(quiz.createdAt).toLocaleDateString()}`}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant={isCompleted ? 'outline' : 'default'}
-                    className="h-7 text-xs px-3 gap-1"
-                    onClick={() => handleStart(quiz)}
-                  >
-                    {isCompleted ? 'Retake' : 'Start'}
-                    <ChevronRight size={11} />
-                  </Button>
-                </div>
-              </GlassCard>
-            )
-          })}
-        </div>
+        {viewMode === 'by-material' && (
+          <QuizzesGroupedByMaterial quizzes={quizzes} materials={materials} onStart={handleStart} />
+        )}
       </div>
     </div>
   )
