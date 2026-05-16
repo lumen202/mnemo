@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useAuthStore, useSubjectStore, useStudyMaterialStore, useFlashcardStore, useQuizStore, useStudySessionStore, useAIStore, useUIStore } from '@/store'
 
 export function HydrateStores({ children }: { children: React.ReactNode }) {
@@ -13,6 +13,7 @@ export function HydrateStores({ children }: { children: React.ReactNode }) {
   const loadSessions = useStudySessionStore((s) => s.loadSessions)
   const loadGoals = useStudySessionStore((s) => s.loadGoals)
   const loadInsights = useAIStore((s) => s.loadInsights)
+  const prevUserId = useRef<string | null>(null)
 
   // Mobile detection and auto-collapse
   useEffect(() => {
@@ -43,6 +44,10 @@ export function HydrateStores({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isAuthenticated && user) {
+      if (prevUserId.current !== null && prevUserId.current !== user.id) {
+        useAIStore.getState().reset()
+      }
+      prevUserId.current = user.id
       loadSubjects(user.id)
       loadMaterials(user.id)
       loadFlashcards(user.id)

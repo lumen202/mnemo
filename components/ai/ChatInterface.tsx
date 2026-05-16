@@ -141,11 +141,16 @@ export function ChatInterface() {
 
     const assistantId = `msg_${Date.now() + 1}`
 
+    const history = messages
+      .slice(0, -1)
+      .slice(-20)
+      .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+
     try {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: content.trim() }),
+        body: JSON.stringify({ message: content.trim(), history }),
       })
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`)

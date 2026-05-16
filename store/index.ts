@@ -111,6 +111,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     document.cookie = 'mnemo_session=; path=/; max-age=0; SameSite=Lax'
     set({ user: null, isAuthenticated: false, isLoading: false, isSigningOut: false })
+    useAIStore.getState().reset()
   },
 
   hydrate: async () => {
@@ -416,6 +417,7 @@ interface AIState {
   switchSession: (id: string) => void
   deleteSession: (id: string) => void
   loadInsights: (userId: string) => Promise<void>
+  reset: () => void
 }
 
 export const useAIStore = create<AIState>((set) => ({
@@ -495,6 +497,22 @@ export const useAIStore = create<AIState>((set) => ({
         return { sessions: remaining, activeSessionId: next.id, messages: next.messages }
       }
       return { sessions: remaining }
+    }),
+
+  reset: () =>
+    set({
+      sessions: [
+        {
+          id: 'session_initial',
+          title: 'Getting Started',
+          createdAt: new Date().toISOString(),
+          messages: SAMPLE_CHAT_MESSAGES,
+        },
+      ],
+      activeSessionId: 'session_initial',
+      messages: SAMPLE_CHAT_MESSAGES,
+      insights: [],
+      isTyping: false,
     }),
 }))
 

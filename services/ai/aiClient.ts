@@ -25,8 +25,14 @@ export interface ChatResult {
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const OPENROUTER_BASE = 'https://openrouter.ai/api/v1'
+const GROQ_BASE       = 'https://api.groq.com/openai/v1'
+const GROQ_MODEL      = 'llama-3.3-70b-versatile'
 const DEFAULT_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS ?? 15_000)
 const MAX_RETRIES = 2
+
+class RateLimitError extends Error {
+  constructor(msg: string) { super(msg); this.name = 'RateLimitError' }
+}
 
 // ─── Rate Limiter (free-tier guard) ───────────────────────────────────────────
 // Sliding-window counters: 15 req/min, 80 req/hour. In-memory — resets on restart.
@@ -62,6 +68,10 @@ function getApiKey(): string {
   const key = process.env.OPENROUTER_API_KEY
   if (!key) throw new Error('OPENROUTER_API_KEY is not configured')
   return key
+}
+
+function getGroqKey(): string | null {
+  return process.env.GROQ_API_KEY ?? null
 }
 
 async function fetchWithTimeout(
@@ -106,6 +116,9 @@ async function callOnce(messages: Message[], opts: ChatOptions): Promise<ChatRes
 
   if (!res.ok) {
     const body = await res.text().catch(() => '')
+    if (res.status === 429 || res.status === 529) {
+      throw new RateLimitError(`OpenRouter ${res.status}: ${body || res.statusText}`)
+    }
     throw new Error(`OpenRouter ${res.status}: ${body || res.statusText}`)
   }
 
@@ -113,6 +126,42 @@ async function callOnce(messages: Message[], opts: ChatOptions): Promise<ChatRes
   return {
     content: json.choices[0]?.message?.content ?? '',
     model: json.model ?? model,
+    tokensUsed: json.usage?.total_tokens,
+  }
+}
+
+async function callGroq(messages: Message[], opts: ChatOptions): Promise<ChatResult> {
+  const key = getGroqKey()
+  if (!key) throw new Error('GROQ_API_KEY is not configured')
+
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  const res = await fetchWithTimeout(
+    `${GROQ_BASE}/chat/completions`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages,
+        max_tokens: opts.maxTokens ?? 1024,
+        temperature: opts.temperature ?? 0.7,
+      }),
+    },
+    timeoutMs
+  )
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`Groq ${res.status}: ${body || res.statusText}`)
+  }
+
+  const json = await res.json()
+  return {
+    content: json.choices[0]?.message?.content ?? '',
+    model: `groq/${GROQ_MODEL}`,
     tokensUsed: json.usage?.total_tokens,
   }
 }
@@ -127,6 +176,7 @@ export async function chat(messages: Message[], opts: ChatOptions = {}): Promise
       return await callOnce(messages, opts)
     } catch (err) {
       lastErr = err instanceof Error ? err : new Error(String(err))
+      if (lastErr instanceof RateLimitError) break  // no point retrying a quota error
       if (attempt < MAX_RETRIES) {
         await new Promise((r) => setTimeout(r, 500 * 2 ** attempt))
       }
@@ -137,59 +187,15 @@ export async function chat(messages: Message[], opts: ChatOptions = {}): Promise
     return callOnce(messages, { ...opts, model: opts.fallbackModel, fallbackModel: undefined })
   }
 
+  // Last resort: Groq fallback when OpenRouter quota is exhausted
+  if (lastErr instanceof RateLimitError && getGroqKey()) {
+    return callGroq(messages, opts)
+  }
+
   throw lastErr
 }
 
-async function openStream(model: string, messages: Message[], opts: ChatOptions): Promise<Response> {
-  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS
-  const controller = new AbortController()
-  const timerId = setTimeout(() => controller.abort(), timeoutMs)
-
-  try {
-    return await fetch(`${OPENROUTER_BASE}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${getApiKey()}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
-        'X-Title': 'Mnemo',
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        max_tokens: opts.maxTokens ?? 512,
-        temperature: opts.temperature ?? 0.7,
-        stream: true,
-      }),
-      signal: controller.signal,
-    })
-  } finally {
-    clearTimeout(timerId)
-  }
-}
-
-// Streams tokens from OpenRouter as an async generator. Caller receives raw
-// content delta strings; caller is responsible for stripping think-tags.
-// Falls back to opts.fallbackModel if the primary request returns a non-2xx.
-export async function* chatStream(
-  messages: Message[],
-  opts: ChatOptions = {}
-): AsyncGenerator<string> {
-  checkRateLimit()
-
-  const primaryModel = opts.model ?? getDefaultModel('tutoring')
-
-  let res = await openStream(primaryModel, messages, opts)
-
-  if (!res.ok && opts.fallbackModel && opts.fallbackModel !== primaryModel) {
-    res = await openStream(opts.fallbackModel, messages, opts)
-  }
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => '')
-    throw new Error(`OpenRouter ${res.status}: ${body || res.statusText}`)
-  }
-
+async function* readSSE(res: Response): AsyncGenerator<string> {
   const reader = res.body!.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
@@ -220,6 +226,83 @@ export async function* chatStream(
   } finally {
     reader.releaseLock()
   }
+}
+
+// Streams tokens as an async generator. Caller receives raw content delta
+// strings; caller is responsible for stripping think-tags.
+// Automatically falls back to Groq when OpenRouter returns 429/529.
+export async function* chatStream(
+  messages: Message[],
+  opts: ChatOptions = {}
+): AsyncGenerator<string> {
+  checkRateLimit()
+
+  const primaryModel = opts.model ?? getDefaultModel('tutoring')
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS
+
+  const openRouterStream = async (model: string): Promise<Response> => {
+    const controller = new AbortController()
+    const timerId = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      return await fetch(`${OPENROUTER_BASE}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${getApiKey()}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
+          'X-Title': 'Mnemo',
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          max_tokens: opts.maxTokens ?? 512,
+          temperature: opts.temperature ?? 0.7,
+          stream: true,
+        }),
+        signal: controller.signal,
+      })
+    } finally {
+      clearTimeout(timerId)
+    }
+  }
+
+  let res = await openRouterStream(primaryModel)
+
+  if (!res.ok && opts.fallbackModel && opts.fallbackModel !== primaryModel) {
+    res = await openRouterStream(opts.fallbackModel)
+  }
+
+  if (!res.ok && (res.status === 429 || res.status === 529) && getGroqKey()) {
+    const groqKey = getGroqKey()!
+    const controller = new AbortController()
+    const timerId = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      res = await fetch(`${GROQ_BASE}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${groqKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: GROQ_MODEL,
+          messages,
+          max_tokens: opts.maxTokens ?? 512,
+          temperature: opts.temperature ?? 0.7,
+          stream: true,
+        }),
+        signal: controller.signal,
+      })
+    } finally {
+      clearTimeout(timerId)
+    }
+  }
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`AI ${res.status}: ${body || res.statusText}`)
+  }
+
+  yield* readSSE(res)
 }
 
 // ─── Structured Output Helper ─────────────────────────────────────────────────

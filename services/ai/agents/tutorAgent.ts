@@ -8,6 +8,7 @@ import type { TutorResponse } from '../types'
 export interface TutorInput {
   message: string
   context?: string
+  history?: { role: string; content: string }[]
 }
 
 // ─── Agent ────────────────────────────────────────────────────────────────────
@@ -27,6 +28,10 @@ export async function run(input: TutorInput): Promise<TutorResponse> {
             { role: 'assistant' as const, content: 'Understood — I have your study context. What would you like to explore?' },
           ]
         : []),
+      ...(input.history ?? []).map((m) => ({
+        role: (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
+        content: m.content,
+      })),
       { role: 'user', content: input.message },
     ]
 
