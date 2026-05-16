@@ -11,6 +11,7 @@ import { useUIStore, useAuthStore } from '@/store'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 const NAV_ITEMS = [
   { href: '/dashboard',  label: 'Dashboard',      icon: LayoutDashboard },
@@ -104,29 +105,33 @@ export function Sidebar() {
       {/* User section */}
       <div className={cn('p-3', !sidebarOpen && 'flex flex-col items-center gap-2')}>
         {sidebarOpen ? (
-          <div className="flex items-center gap-3 px-1">
-            <Avatar className="w-8 h-8 shrink-0">
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">{user?.name ?? 'Student'}</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+          <>
+            <div className="flex items-center gap-3 px-1 mb-2">
+              <Avatar className="w-8 h-8 shrink-0">
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{user?.name ?? 'Student'}</p>
+                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={signOut}
+                className="text-muted-foreground hover:text-destructive shrink-0"
+                title="Sign out"
+              >
+                <LogOut size={15} />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={signOut}
-              className="text-muted-foreground hover:text-destructive shrink-0"
-              title="Sign out"
-            >
-              <LogOut size={15} />
-            </Button>
-          </div>
+            <ThemeToggle showLabel className="w-full justify-start" />
+          </>
         ) : (
           <>
             <Avatar className="w-8 h-8">
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="icon-sm"

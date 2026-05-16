@@ -5,6 +5,7 @@ import {
   GraduationCap, Zap, FileText, MessageSquare,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 const FEATURES = [
   {
@@ -114,7 +115,8 @@ export default function LandingPage() {
           <Link href="#how-it-works" className="hover:text-foreground transition-colors">How it works</Link>
           <Link href="#testimonials" className="hover:text-foreground transition-colors">Stories</Link>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <ThemeToggle showLabel />
           <Button variant="ghost" size="sm" asChild>
             <Link href="/auth/login">Sign In</Link>
           </Button>

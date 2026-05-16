@@ -225,18 +225,24 @@ export const useAIStore = create<AIState>((set) => ({
 
 // ─── UI Store ──────────────────────────────────────────────────────────────────
 
+export type Theme = 'dark' | 'light' | 'system'
+
 interface UIState {
   sidebarOpen: boolean
   addMaterialOpen: boolean
+  theme: Theme
   toggleSidebar: () => void
   setSidebarOpen: (v: boolean) => void
   setAddMaterialOpen: (v: boolean) => void
+  setTheme: (t: Theme) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
   sidebarOpen: true,
   addMaterialOpen: false,
+  theme: 'dark',
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
   setAddMaterialOpen: (addMaterialOpen) => set({ addMaterialOpen }),
+  setTheme: (theme) => set({ theme }),
 }))
