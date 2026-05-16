@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, FileText, StickyNote, Video, Link2, BookMarked,
-  Sparkles, Loader2, Download, ChevronDown, ChevronUp,
+  Sparkles, Loader2, Download, ChevronDown, ChevronUp, Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { GlassCard } from '@/components/common/GlassCard'
@@ -40,7 +40,7 @@ const STATUS_CONFIG: Record<MaterialStatus, { label: string; color: string; bg: 
 export default function MaterialDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const { materials, updateMaterial } = useStudyMaterialStore()
+  const { materials, updateMaterial, deleteMaterial } = useStudyMaterialStore()
 
   const material: StudyMaterial | undefined = materials.find((m) => m.id === id)
 
@@ -84,17 +84,29 @@ export default function MaterialDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: body, title: material.title }),
       })
-      const data = await res.json() as { summary?: string; keyPoints?: string[]; error?: string }
+      const data = await res.json() as { summary?: string; keyPoints?: string[]; suggestedSubject?: string; error?: string }
       if (!res.ok) throw new Error(data.error ?? 'Failed')
-      await updateMaterial(material.id, {
-        status: 'summarized',
+      const updates: Record<string, unknown> = {
+        status: 'summarized' as const,
         summary: data.summary,
         keyPoints: data.keyPoints?.length ? data.keyPoints : undefined,
-      }).catch(() => {})
+      }
+      if (data.suggestedSubject) {
+        updates.subject = data.suggestedSubject
+      }
+      await updateMaterial(material.id, updates).catch(() => {})
     } catch {
       // silently ignore
     } finally {
       setIsSummarizing(false)
+    }
+  }
+
+  function handleDelete() {
+    if (!material) return
+    if (window.confirm(`Delete "${material.title}"? This cannot be undone.`)) {
+      deleteMaterial(material.id)
+      router.push('/materials')
     }
   }
 
@@ -170,6 +182,15 @@ export default function MaterialDetailPage() {
               <Download size={12} /> Download original
             </a>
           )}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="gap-1.5 text-xs text-muted-foreground hover:text-red-400 hover:bg-red-500/10 ml-auto"
+            onClick={handleDelete}
+          >
+            <Trash2 size={12} />
+            Delete
+          </Button>
         </div>
       </GlassCard>
 

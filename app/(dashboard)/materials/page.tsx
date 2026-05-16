@@ -1,7 +1,7 @@
 'use client'
 import { useState, useMemo } from 'react'
-import Link from 'next/link'
-import { Plus, ArrowUpDown, FileText, StickyNote, Video, Link2, BookMarked, Upload, Sparkles, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Plus, ArrowUpDown, FileText, StickyNote, Video, Link2, BookMarked, Upload, Sparkles, Loader2, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { GlassCard } from '@/components/common/GlassCard'
 import { Input } from '@/components/ui/input'
@@ -36,10 +36,11 @@ const STATUS_CONFIG: Record<MaterialStatus, { label: string; color: string; bg: 
 }
 
 function MaterialCard({ material }: { material: StudyMaterial }) {
+  const router = useRouter()
   const meta = SUBJECT_META[material.subject]
   const IconComp = TYPE_ICONS[material.type] ?? FileText
   const status = STATUS_CONFIG[material.status]
-  const { updateMaterial } = useStudyMaterialStore()
+  const { updateMaterial, deleteMaterial } = useStudyMaterialStore()
   const [isSummarizing, setIsSummarizing] = useState(false)
   const [showKeyPoints, setShowKeyPoints] = useState(false)
 
@@ -67,9 +68,12 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
   }
 
   return (
-    <Link
-      href={`/materials/${material.id}`}
+    <div
+      onClick={() => router.push(`/materials/${material.id}`)}
       className="flex items-start gap-4 px-4 py-4 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/[0.06] group cursor-pointer"
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/materials/${material.id}`) }}
     >
       <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5', meta?.bg ?? 'bg-slate-500/20')}>
         <IconComp className="w-4.5 h-4.5" style={{ color: meta?.color }} size={18} />
@@ -104,7 +108,7 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
         {material.keyPoints && material.keyPoints.length > 0 && (
           <div className="mt-2">
             <button
-              onClick={(e) => { e.preventDefault(); setShowKeyPoints(!showKeyPoints) }}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowKeyPoints(!showKeyPoints) }}
               className="flex items-center gap-1 text-[11px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
             >
               {showKeyPoints ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
@@ -152,15 +156,30 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
             size="sm"
             variant="outline"
             className="text-xs gap-1 h-7 px-2"
-            onClick={(e) => { e.preventDefault(); summarize() }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); summarize() }}
             disabled={isSummarizing}
           >
             {isSummarizing ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
             {isSummarizing ? 'Working…' : 'Summarize'}
           </Button>
         )}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-xs gap-1 h-7 px-2 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            if (window.confirm(`Delete "${material.title}"? This cannot be undone.`)) {
+              deleteMaterial(material.id)
+            }
+          }}
+        >
+          <Trash2 size={11} />
+          Delete
+        </Button>
       </div>
-    </Link>
+    </div>
   )
 }
 

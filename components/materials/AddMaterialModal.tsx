@@ -29,21 +29,6 @@ async function uploadToStorage(file: File): Promise<string | null> {
   return data.publicUrl
 }
 
-async function detectSubject(content: string, title: string): Promise<SubjectId> {
-  try {
-    const res = await fetch('/api/ai/summary', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: content.slice(0, 3000), title }),
-    })
-    if (!res.ok) return 'other'
-    const data = await res.json() as { suggestedSubject?: SubjectId }
-    return data.suggestedSubject ?? 'other'
-  } catch {
-    return 'other'
-  }
-}
-
 const SUBJECTS: SubjectId[] = [
   'mathematics', 'computer-science', 'physics', 'literature',
   'machine-learning', 'history', 'biology', 'chemistry',
@@ -132,13 +117,10 @@ export function AddMaterialModal() {
     setError('')
     setIsSaving(true)
     try {
-      const [source, detectedSubject] = await Promise.all([
-        uploadFile ? uploadToStorage(uploadFile) : Promise.resolve(null),
-        detectSubject(content, title),
-      ])
+      const source = uploadFile ? await uploadToStorage(uploadFile) : null
       await addMaterial({
         title: title.trim(),
-        subject: detectedSubject,
+        subject: 'other',
         type: materialType,
         status: 'pending',
         uploadDate: new Date().toISOString().slice(0, 10),
@@ -163,7 +145,7 @@ export function AddMaterialModal() {
           <div>
             <h2 className="text-base font-semibold text-foreground">Upload Study Material</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              AI will auto-categorize — open the material to summarize and extract key points
+              Open the material and click Summarize — AI will categorize, summarize, and extract key points
             </p>
           </div>
           <button
