@@ -50,9 +50,10 @@ export function RecentMaterials() {
           const statusColor = getMaterialStatusColor(mat.status)
 
           return (
-            <div
+            <Link
               key={mat.id}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors group"
+              href={`/materials/${mat.id}`}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div
@@ -70,7 +71,7 @@ export function RecentMaterials() {
                 </p>
                 <p className="text-xs text-muted-foreground">{mat.uploadDate}</p>
               </div>
-            </div>
+            </Link>
           )
         })}
       </div>
