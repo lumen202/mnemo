@@ -2,6 +2,7 @@ import * as aiClient from '../aiClient'
 import { getDefaultModel } from '../modelRegistry'
 import { SUMMARIZER_SYSTEM_PROMPT } from '../prompts/summarizerPrompt'
 import type { SummaryResponse } from '../types'
+import type { SubjectId } from '@/types'
 
 // ─── Input ────────────────────────────────────────────────────────────────────
 
@@ -33,7 +34,7 @@ export async function run(input: SummaryInput): Promise<SummaryResponse> {
       temperature: 0.3,
     })
 
-    const parsed = aiClient.extractJson<{ summary: string; keyPoints: string[] }>(result.content)
+    const parsed = aiClient.extractJson<{ summary: string; keyPoints: string[]; suggestedSubject?: SubjectId }>(result.content)
 
     if (!parsed || !parsed.summary || !Array.isArray(parsed.keyPoints)) {
       return {
@@ -47,6 +48,7 @@ export async function run(input: SummaryInput): Promise<SummaryResponse> {
     return {
       summary: parsed.summary,
       keyPoints: parsed.keyPoints,
+      suggestedSubject: parsed.suggestedSubject,
       model: result.model,
       tokensUsed: result.tokensUsed,
     }

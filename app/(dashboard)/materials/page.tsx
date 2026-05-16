@@ -1,17 +1,15 @@
 'use client'
 import { useState, useMemo } from 'react'
-import { Plus, ArrowUpDown, FileText, StickyNote, Video, Link2, BookMarked, Upload, Sparkles } from 'lucide-react'
+import { Plus, ArrowUpDown, FileText, StickyNote, Video, Link2, BookMarked, Upload, Sparkles, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { GlassCard } from '@/components/common/GlassCard'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { useStudyMaterialStore, useUIStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
-import { getMaterialStatusColor } from '@/utils/analytics'
 import { StatCard } from '@/components/common/StatCard'
 import { cn } from '@/lib/utils'
 import type { MaterialType, MaterialStatus, StudyMaterial } from '@/types'
-import { BookOpen, CheckCircle, Clock } from 'lucide-react'
+import { BookOpen, CheckCircle } from 'lucide-react'
 
 const TYPE_ICONS: Record<MaterialType, typeof FileText> = {
   pdf:      FileText,
@@ -40,6 +38,32 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
   const meta = SUBJECT_META[material.subject]
   const IconComp = TYPE_ICONS[material.type] ?? FileText
   const status = STATUS_CONFIG[material.status]
+  const { updateMaterial } = useStudyMaterialStore()
+  const [isSummarizing, setIsSummarizing] = useState(false)
+  const [showKeyPoints, setShowKeyPoints] = useState(false)
+
+  async function summarize() {
+    setIsSummarizing(true)
+    try {
+      const content = material.description ?? material.title
+      const res = await fetch('/api/ai/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, title: material.title }),
+      })
+      const data = await res.json() as { summary?: string; keyPoints?: string[]; error?: string }
+      if (!res.ok) throw new Error(data.error ?? 'Failed')
+      await updateMaterial(material.id, {
+        status: 'summarized',
+        summary: data.summary,
+        keyPoints: data.keyPoints?.length ? data.keyPoints : undefined,
+      }).catch(() => {})
+    } catch {
+      // silently ignore — button will re-enable
+    } finally {
+      setIsSummarizing(false)
+    }
+  }
 
   return (
     <div className="flex items-start gap-4 px-4 py-4 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/[0.06] group">
@@ -73,6 +97,29 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
         {material.summary && (
           <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{material.summary}</p>
         )}
+        {material.keyPoints && material.keyPoints.length > 0 && (
+          <div className="mt-2">
+            <button
+              onClick={() => setShowKeyPoints(!showKeyPoints)}
+              className="flex items-center gap-1 text-[11px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+            >
+              {showKeyPoints ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+              {showKeyPoints ? 'Hide' : 'Key Points'} ({material.keyPoints.length})
+            </button>
+            {showKeyPoints && (
+              <ul className="mt-2 space-y-1.5">
+                {material.keyPoints.map((kp, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="w-3.5 h-3.5 rounded-full bg-indigo-500/20 text-indigo-400 text-[9px] flex items-center justify-center shrink-0 mt-0.5 font-medium">
+                      {i + 1}
+                    </span>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">{kp}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
         {material.tags && material.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {material.tags.slice(0, 3).map((tag) => (
@@ -85,10 +132,20 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
       </div>
       <div className="shrink-0 flex flex-col items-end gap-2">
         <p className="text-xs text-muted-foreground">{material.uploadDate}</p>
+        {material.source && (
+          <a
+            href={material.source}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors"
+          >
+            Download
+          </a>
+        )}
         {material.status === 'pending' && (
-          <Button size="sm" variant="outline" className="text-xs gap-1 h-7 px-2">
-            <Sparkles size={11} />
-            Summarize
+          <Button size="sm" variant="outline" className="text-xs gap-1 h-7 px-2" onClick={summarize} disabled={isSummarizing}>
+            {isSummarizing ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+            {isSummarizing ? 'Working…' : 'Summarize'}
           </Button>
         )}
       </div>

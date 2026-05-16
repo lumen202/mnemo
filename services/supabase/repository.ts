@@ -38,6 +38,8 @@ interface MaterialRow {
   upload_date: string
   description: string | null
   summary: string | null
+  key_points: string[] | null
+  content?: string | null
   tags: string[] | null
   pages: number | null
   word_count: number | null
@@ -138,6 +140,8 @@ function toMaterial(row: MaterialRow): StudyMaterial {
     uploadDate: row.upload_date,
     description: row.description ?? undefined,
     summary: row.summary ?? undefined,
+    keyPoints: row.key_points ?? undefined,
+    // content is intentionally omitted from list queries — fetched on demand to keep the store lean
     tags: row.tags ?? undefined,
     pages: row.pages ?? undefined,
     wordCount: row.word_count ?? undefined,
@@ -256,15 +260,29 @@ export async function deleteSubject(id: string): Promise<void> {
 
 // ─── Study Materials ──────────────────────────────────────────────────────────
 
+const MATERIAL_LIST_COLUMNS =
+  'id,user_id,title,subject,type,status,upload_date,description,summary,key_points,tags,pages,word_count,source,created_at'
+
 export async function getMaterials(userId: string): Promise<StudyMaterial[]> {
   const { data, error } = await supabase
     .from('study_materials')
-    .select('*')
+    .select(MATERIAL_LIST_COLUMNS)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
 
   if (error) throw error
   return (data ?? []).map(toMaterial)
+}
+
+export async function getMaterialContent(id: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('study_materials')
+    .select('content')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return (data as { content: string | null }).content
 }
 
 export async function createMaterial(
@@ -282,12 +300,14 @@ export async function createMaterial(
       upload_date: material.uploadDate ?? new Date().toISOString().slice(0, 10),
       description: material.description ?? null,
       summary: material.summary ?? null,
+      key_points: material.keyPoints ?? null,
+      content: material.content ?? null,
       tags: material.tags ?? null,
       pages: material.pages ?? null,
       word_count: material.wordCount ?? null,
       source: material.source ?? null,
     })
-    .select()
+    .select(MATERIAL_LIST_COLUMNS)
     .single()
 
   if (error) throw error
@@ -303,6 +323,8 @@ export async function updateMaterial(id: string, updates: Partial<StudyMaterial>
   if (updates.uploadDate !== undefined) db.upload_date = updates.uploadDate
   if (updates.description !== undefined) db.description = updates.description
   if (updates.summary !== undefined) db.summary = updates.summary
+  if (updates.keyPoints !== undefined) db.key_points = updates.keyPoints
+  if (updates.content !== undefined) db.content = updates.content
   if (updates.tags !== undefined) db.tags = updates.tags
   if (updates.pages !== undefined) db.pages = updates.pages
   if (updates.wordCount !== undefined) db.word_count = updates.wordCount
@@ -312,7 +334,7 @@ export async function updateMaterial(id: string, updates: Partial<StudyMaterial>
     .from('study_materials')
     .update(db)
     .eq('id', id)
-    .select()
+    .select(MATERIAL_LIST_COLUMNS)
     .single()
 
   if (error) throw error

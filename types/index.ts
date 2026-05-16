@@ -44,6 +44,8 @@ export interface StudyMaterial {
   uploadDate: string
   description?: string
   summary?: string
+  keyPoints?: string[]
+  content?: string
   tags?: string[]
   pages?: number
   wordCount?: number

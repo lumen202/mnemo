@@ -184,7 +184,12 @@ export async function chat(messages: Message[], opts: ChatOptions = {}): Promise
   }
 
   if (opts.fallbackModel && opts.fallbackModel !== opts.model) {
-    return callOnce(messages, { ...opts, model: opts.fallbackModel, fallbackModel: undefined })
+    try {
+      return await callOnce(messages, { ...opts, model: opts.fallbackModel, fallbackModel: undefined })
+    } catch (err) {
+      if (err instanceof RateLimitError) lastErr = err
+      else throw err
+    }
   }
 
   // Last resort: Groq fallback when OpenRouter quota is exhausted

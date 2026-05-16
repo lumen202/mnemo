@@ -1,6 +1,7 @@
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
 import { HydrateStores } from '@/components/layout/HydrateStores'
+import { GlobalModals } from '@/components/materials/GlobalModals'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,6 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </main>
         </div>
       </div>
+      <GlobalModals />
     </HydrateStores>
   )
 }

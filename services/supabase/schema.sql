@@ -38,6 +38,8 @@ create table if not exists public.study_materials (
   upload_date  date not null default current_date,
   description  text,
   summary      text,
+  key_points   text[],
+  content      text,
   tags         text[],
   pages        int,
   word_count   int,

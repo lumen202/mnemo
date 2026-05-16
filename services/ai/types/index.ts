@@ -11,6 +11,7 @@ export interface TutorResponse {
 export interface SummaryResponse {
   summary: string
   keyPoints: string[]
+  suggestedSubject?: import('@/types').SubjectId
   model: string
   tokensUsed?: number
 }

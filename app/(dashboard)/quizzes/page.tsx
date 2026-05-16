@@ -5,10 +5,10 @@ import { GlassCard } from '@/components/common/GlassCard'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useQuizStore } from '@/store'
+import { useQuizStore, useStudyMaterialStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
 import { cn } from '@/lib/utils'
-import type { Quiz, SubjectId } from '@/types'
+import type { Quiz, SubjectId, StudyMaterial } from '@/types'
 import type { QuizResponse } from '@/services/ai/types'
 
 const SUBJECT_OPTIONS: SubjectId[] = [
@@ -166,22 +166,35 @@ function QuizResult({ quiz, score, onRetry }: { quiz: Quiz; score: number; onRet
 
 function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) {
   const { addQuiz } = useQuizStore()
+  const { materials } = useStudyMaterialStore()
+  const [selectedMaterial, setSelectedMaterial] = useState<StudyMaterial | null>(null)
   const [subject, setSubject] = useState<SubjectId>('computer-science')
   const [topic, setTopic] = useState('')
   const [count, setCount] = useState(5)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  function pickMaterial(id: string) {
+    if (id === '__none__') { setSelectedMaterial(null); return }
+    const mat = materials.find((m) => m.id === id) ?? null
+    setSelectedMaterial(mat)
+    if (mat) { setSubject(mat.subject); setTopic(mat.title) }
+  }
+
   const handleGenerate = async () => {
-    if (!topic.trim()) return
+    if (!topic.trim() && !selectedMaterial) return
     setIsGenerating(true)
     setError(null)
+
+    const content = selectedMaterial
+      ? (selectedMaterial.content ?? selectedMaterial.summary ?? selectedMaterial.title)
+      : topic.trim()
 
     try {
       const res = await fetch('/api/ai/quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject, content: topic.trim(), count }),
+        body: JSON.stringify({ subject, content, count }),
       })
 
       if (!res.ok) {
@@ -195,6 +208,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
         id: `quiz_${Date.now()}`,
         userId: 'user_demo',
         subjectId: data.subject,
+        materialId: selectedMaterial?.id,
         title: data.title,
         totalQuestions: data.questions.length,
         createdAt: new Date().toISOString(),
@@ -210,6 +224,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
       addQuiz(quiz).catch(() => {})
       onGenerated(quiz)
       setTopic('')
+      setSelectedMaterial(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Generation failed')
     } finally {
@@ -225,11 +240,31 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
         </div>
         <div>
           <h3 className="text-sm font-semibold text-foreground">AI Quiz Generator</h3>
-          <p className="text-xs text-muted-foreground">Select a subject and describe the topic — Mnemo will build a targeted multiple-choice quiz.</p>
+          <p className="text-xs text-muted-foreground">Generate from an uploaded material or describe a topic below.</p>
         </div>
       </div>
 
       <div className="space-y-3">
+        {materials.length > 0 && (
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-medium text-muted-foreground">From study material (optional)</label>
+            <Select value={selectedMaterial?.id ?? '__none__'} onValueChange={pickMaterial}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="None — enter topic below" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">None — enter topic below</SelectItem>
+                {materials.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.title}
+                    <span className="ml-2 text-muted-foreground text-[10px]">{SUBJECT_META[m.subject]?.label}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-[11px] font-medium text-muted-foreground">Subject</label>
@@ -260,11 +295,13 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-[11px] font-medium text-muted-foreground">Topic / content to quiz on</label>
+          <label className="text-[11px] font-medium text-muted-foreground">
+            {selectedMaterial ? 'Topic (from material)' : 'Topic / content to quiz on'}
+          </label>
           <Textarea
             value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="e.g. Dynamic programming, Photosynthesis, French Revolution causes, Derivatives and integrals..."
+            onChange={(e) => { setTopic(e.target.value); if (selectedMaterial) setSelectedMaterial(null) }}
+            placeholder="e.g. Dynamic programming, Photosynthesis, French Revolution causes..."
             className="h-20 text-sm resize-none"
             disabled={isGenerating}
             onKeyDown={(e) => {
@@ -274,6 +311,11 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
               }
             }}
           />
+          {selectedMaterial && (
+            <p className="text-[11px] text-indigo-400/80">
+              Using full content of &ldquo;{selectedMaterial.title}&rdquo; — edit above to override
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -281,7 +323,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
             size="sm"
             className="gap-1.5"
             onClick={handleGenerate}
-            disabled={isGenerating || !topic.trim()}
+            disabled={isGenerating || (!topic.trim() && !selectedMaterial)}
           >
             {isGenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
             {isGenerating ? 'Generating...' : 'Generate Quiz'}

@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useFlashcardStore } from '@/store'
+import { useFlashcardStore, useStudyMaterialStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
 import { cn } from '@/lib/utils'
-import type { Flashcard, SubjectId } from '@/types'
+import type { Flashcard, SubjectId, StudyMaterial } from '@/types'
 import type { FlashcardResponse } from '@/services/ai/types'
 
 const DIFFICULTY_CONFIG = {
@@ -159,6 +159,8 @@ const SUBJECT_OPTIONS: SubjectId[] = [
 
 function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void }) {
   const { addFlashcard } = useFlashcardStore()
+  const { materials } = useStudyMaterialStore()
+  const [selectedMaterial, setSelectedMaterial] = useState<StudyMaterial | null>(null)
   const [subject, setSubject] = useState<SubjectId>('computer-science')
   const [topic, setTopic] = useState('')
   const [count, setCount] = useState(6)
@@ -166,21 +168,28 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
   const [lastCount, setLastCount] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  function pickMaterial(id: string) {
+    if (id === '__none__') { setSelectedMaterial(null); return }
+    const mat = materials.find((m) => m.id === id) ?? null
+    setSelectedMaterial(mat)
+    if (mat) { setSubject(mat.subject); setTopic(mat.title) }
+  }
+
   const handleGenerate = async () => {
-    if (!topic.trim()) return
+    if (!topic.trim() && !selectedMaterial) return
     setIsGenerating(true)
     setLastCount(null)
     setError(null)
 
     try {
+      const content = selectedMaterial
+        ? (selectedMaterial.content ?? selectedMaterial.summary ?? selectedMaterial.title)
+        : topic.trim()
+
       const res = await fetch('/api/ai/flashcards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject,
-          content: topic.trim(),
-          count,
-        }),
+        body: JSON.stringify({ subject, content, count }),
       })
 
       if (!res.ok) {
@@ -198,12 +207,14 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
           back: fc.back,
           difficulty: fc.difficulty,
           timesReviewed: 0,
+          materialId: selectedMaterial?.id,
         })
       })
 
       setLastCount(cards.length)
       onGenerated(cards.length)
       setTopic('')
+      setSelectedMaterial(null)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Generation failed'
       setLastCount(-1)
@@ -221,11 +232,31 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
         </div>
         <div>
           <h3 className="text-sm font-semibold text-foreground">AI Flashcard Generator</h3>
-          <p className="text-xs text-muted-foreground">Select a subject and describe the topic you want flashcards for.</p>
+          <p className="text-xs text-muted-foreground">Generate from an uploaded material or describe a topic below.</p>
         </div>
       </div>
 
       <div className="space-y-3">
+        {materials.length > 0 && (
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-medium text-muted-foreground">From study material (optional)</label>
+            <Select value={selectedMaterial?.id ?? '__none__'} onValueChange={pickMaterial}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="None — enter topic below" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">None — enter topic below</SelectItem>
+                {materials.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.title}
+                    <span className="ml-2 text-muted-foreground text-[10px]">{SUBJECT_META[m.subject]?.label}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-[11px] font-medium text-muted-foreground">Subject</label>
@@ -259,11 +290,13 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-[11px] font-medium text-muted-foreground">Topic / content to study</label>
+          <label className="text-[11px] font-medium text-muted-foreground">
+            {selectedMaterial ? 'Topic (from material)' : 'Topic / content to study'}
+          </label>
           <Textarea
             value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="e.g. Integration by parts, Binary search trees, Wave-particle duality, World War II causes..."
+            onChange={(e) => { setTopic(e.target.value); if (selectedMaterial) setSelectedMaterial(null) }}
+            placeholder="e.g. Integration by parts, Binary search trees, Wave-particle duality..."
             className="h-20 text-sm resize-none"
             disabled={isGenerating}
             onKeyDown={(e) => {
@@ -273,6 +306,11 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
               }
             }}
           />
+          {selectedMaterial && (
+            <p className="text-[11px] text-indigo-400/80">
+              Using full content of &ldquo;{selectedMaterial.title}&rdquo; — edit above to override
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -280,7 +318,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
             size="sm"
             className="gap-1.5"
             onClick={handleGenerate}
-            disabled={isGenerating || !topic.trim()}
+            disabled={isGenerating || (!topic.trim() && !selectedMaterial)}
           >
             {isGenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
             {isGenerating ? 'Generating...' : 'Generate Flashcards'}
