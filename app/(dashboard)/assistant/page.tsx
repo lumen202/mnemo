@@ -48,7 +48,7 @@ export default function AssistantPage() {
           {/* Quick actions */}
           <GlassCard className="p-4">
             <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Quick Actions</h3>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {QUICK_ACTIONS.map(({ icon: Icon, label, href, color, bg }) => (
                 <Link
                   key={label}

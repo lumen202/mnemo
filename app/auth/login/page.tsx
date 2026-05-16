@@ -63,25 +63,25 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen hero-gradient flex items-center justify-center p-6">
+    <div className="min-h-screen hero-gradient flex items-center justify-center p-4 sm:p-6">
       <div className="absolute top-1/4 left-1/3 w-96 h-96 rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none" />
 
       <div className="w-full max-w-md relative">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2.5 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+        <div className="text-center mb-6 sm:mb-8">
+          <Link href="/" className="inline-flex items-center gap-2.5 mb-4 sm:mb-6">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold gradient-text-study">Mnemo</span>
           </Link>
           <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sign in to your study dashboard</p>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Sign in to your study dashboard</p>
         </div>
 
         {/* Demo hint */}
-        <div className="glass border border-indigo-500/25 rounded-xl p-3.5 mb-5 flex items-start gap-2.5">
-          <Sparkles size={14} className="text-indigo-400 shrink-0 mt-0.5" />
+        <div className="glass border border-indigo-500/25 rounded-xl p-3 sm:p-3.5 mb-4 sm:mb-5 flex items-start gap-2">
+          <Sparkles size={14} className="text-indigo-400 shrink-0 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-muted-foreground">
             {isSupabaseConfigured() ? (
               <>
@@ -96,7 +96,7 @@ export default function LoginPage() {
         </div>
 
         {/* Form */}
-        <div className="glass border border-white/[0.07] rounded-2xl p-6">
+        <div className="glass border border-white/[0.07] rounded-2xl p-5 sm:p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
@@ -108,6 +108,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
+                className="min-h-[44px]"
               />
             </div>
             <div className="space-y-1.5">
@@ -126,12 +127,12 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="pr-10"
+                  className="pr-10 min-h-[44px]"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-2"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -144,7 +145,7 @@ export default function LoginPage() {
               </p>
             )}
 
-            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+            <Button type="submit" className="w-full min-h-[44px]" size="lg" disabled={isLoading}>
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
@@ -170,10 +171,10 @@ export default function LoginPage() {
           {isSupabaseConfigured() ? (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground text-center">Quick Login (Dev Only)</p>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 min-h-[44px]"
                   size="lg"
                   onClick={() => quickLogin(DEMO_EMAIL, DEMO_PASSWORD)}
                 >
@@ -182,7 +183,7 @@ export default function LoginPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 min-h-[44px]"
                   size="lg"
                   onClick={() => quickLogin(TEST_EMAIL, TEST_PASSWORD)}
                 >
@@ -194,7 +195,7 @@ export default function LoginPage() {
           ) : (
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full min-h-[44px]"
               size="lg"
               onClick={() => quickLogin('alex@mnemo.app', 'demo1234')}
             >
@@ -203,7 +204,7 @@ export default function LoginPage() {
           )}
         </div>
 
-        <p className="text-center text-sm text-muted-foreground mt-5">
+        <p className="text-center text-xs sm:text-sm text-muted-foreground mt-4 sm:mt-5 px-2 sm:px-0">
           Don&apos;t have an account?{' '}
           <Link href="/auth/signup" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
             Sign up free

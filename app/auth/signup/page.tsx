@@ -40,14 +40,14 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen hero-gradient flex items-center justify-center p-6">
+    <div className="min-h-screen hero-gradient flex items-center justify-center p-4 sm:p-6">
       <div className="absolute top-1/4 right-1/3 w-96 h-96 rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none" />
 
-      <div className="w-full max-w-4xl grid md:grid-cols-2 gap-8 items-center relative">
+      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center relative">
         {/* Left — Pitch */}
         <div className="hidden md:block">
-          <Link href="/" className="inline-flex items-center gap-2.5 mb-8">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+          <Link href="/" className="inline-flex items-center gap-2.5 mb-6 sm:mb-8">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold gradient-text-study">Mnemo</span>
@@ -71,18 +71,18 @@ export default function SignupPage() {
 
         {/* Right — Form */}
         <div>
-          <div className="text-center mb-6 md:hidden">
+          <div className="text-center mb-4 sm:mb-6 md:hidden">
             <Link href="/" className="inline-flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shrink-0">
                 <GraduationCap className="w-4 h-4 text-white" />
               </div>
               <span className="font-bold gradient-text-study">Mnemo</span>
             </Link>
           </div>
 
-          <div className="glass border border-white/[0.07] rounded-2xl p-6">
+          <div className="glass border border-white/[0.07] rounded-2xl p-5 sm:p-6">
             <h1 className="text-xl font-bold text-foreground mb-1">Create your account</h1>
-            <p className="text-sm text-muted-foreground mb-5">Free forever. No credit card required.</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-5">Free forever. No credit card required.</p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
@@ -95,6 +95,7 @@ export default function SignupPage() {
                   onChange={(e) => setName(e.target.value)}
                   required
                   autoComplete="name"
+                  className="min-h-[44px]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -107,6 +108,7 @@ export default function SignupPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
+                  className="min-h-[44px]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -120,12 +122,12 @@ export default function SignupPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     autoComplete="new-password"
-                    className="pr-10"
+                    className="pr-10 min-h-[44px]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-2"
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -138,7 +140,7 @@ export default function SignupPage() {
                 </p>
               )}
 
-              <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+              <Button type="submit" className="w-full min-h-[44px]" size="lg" disabled={isLoading}>
                 {isLoading ? (
                   <span className="flex items-center gap-2">
                     <span className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
@@ -160,7 +162,7 @@ export default function SignupPage() {
             </form>
           </div>
 
-          <p className="text-center text-sm text-muted-foreground mt-4">
+          <p className="text-center text-xs sm:text-sm text-muted-foreground mt-3 sm:mt-4 px-2 sm:px-0">
             Already have an account?{' '}
             <Link href="/auth/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
               Sign in

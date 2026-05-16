@@ -132,7 +132,7 @@ export default function MaterialsPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-5">
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <StatCard
           label="Total Materials"
           value={`${materials.length}`}

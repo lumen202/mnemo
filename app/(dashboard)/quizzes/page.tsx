@@ -291,7 +291,7 @@ export default function QuizzesPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-5">
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {[
           { label: 'Total Quizzes', value: quizzes.length, color: 'text-indigo-400', bg: 'bg-indigo-500/15' },
           { label: 'Completed',     value: completed.length, color: 'text-emerald-400', bg: 'bg-emerald-500/15' },

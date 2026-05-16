@@ -40,7 +40,7 @@ export default function PlannerPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-5">
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Study Streak', value: `${streak} days`, icon: Flame, color: 'text-amber-400', bg: 'bg-amber-500/15' },
           { label: 'Today',        value: `${todayHours.toFixed(1)}h`, icon: Clock, color: 'text-indigo-400', bg: 'bg-indigo-500/15' },
@@ -57,7 +57,7 @@ export default function PlannerPage() {
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Goals */}
         <div className="lg:col-span-2 space-y-4">
           <GlassCard className="p-5">

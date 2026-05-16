@@ -105,6 +105,9 @@
   * {
     @apply border-border;
   }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -288,6 +291,16 @@
   }
   .animate-pulse-slow {
     animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  /* Touch-friendly utilities */
+  .touch-action\:manipulation {
+    touch-action: manipulation;
+  }
+  /* Smooth scrolling for mobile */
+  @supports (-webkit-touch-callout: none) {
+    .scroll-smooth-mobile {
+      -webkit-overflow-scrolling: touch;
+    }
   }
 }
 

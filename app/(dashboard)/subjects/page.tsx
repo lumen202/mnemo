@@ -115,7 +115,7 @@ export default function SubjectsPage() {
       </GlassCard>
 
       {/* Overview stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Total Subjects',   value: `${subjects.length}`,                 color: 'text-indigo-400',  bg: 'bg-indigo-500/15' },
           { label: 'Hours Targeted',   value: `${totalHours}h`,                     color: 'text-foreground',  bg: 'bg-white/5'       },

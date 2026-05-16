@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, BookOpen, Layers, Brain, LogOut,
   GraduationCap, ChevronLeft, ChevronRight, Sparkles,
-  FlipHorizontal, CircleHelp, CalendarDays,
+  FlipHorizontal, CircleHelp, CalendarDays, X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore, useAuthStore } from '@/store'
@@ -20,6 +20,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogOverlay,
+  DialogClose,
+  DialogPortal,
 } from '@/components/ui/dialog'
 
 const NAV_ITEMS = [
@@ -35,7 +38,7 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { sidebarOpen, toggleSidebar } = useUIStore()
+  const { sidebarOpen, toggleSidebar, setSidebarOpen, isMobile } = useUIStore()
   const { user, signOut, isSigningOut } = useAuthStore()
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false)
 
@@ -49,15 +52,138 @@ export function Sidebar() {
     router.push('/')
   }
 
+  const handleNavClick = () => {
+    // Close drawer on nav item click on mobile
+    if (isMobile) {
+      setSidebarOpen(false)
+    }
+  }
+
   const initials = user?.name
     ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
     : 'U'
 
+  // Mobile drawer mode
+  if (isMobile) {
+    return (
+      <Dialog open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <DialogPortal>
+          <DialogOverlay className="z-40" />
+          <div className="fixed inset-0 z-40 pointer-events-none" />
+          <div
+            className={cn(
+              'fixed left-0 top-0 h-screen w-60 z-50',
+              'sidebar-gradient border-r border-white/[0.06]',
+              'data-[state=open]:slide-in-from-left-0 data-[state=closed]:slide-out-to-left-0',
+              'data-[state=open]:animate-in data-[state=closed]:animate-out',
+              'data-[state=closed]:duration-200 data-[state=open]:duration-300',
+              'overflow-hidden'
+            )}
+            data-state={sidebarOpen ? 'open' : 'closed'}
+          >
+            <div className="flex flex-col h-screen">
+              {/* Header with close button */}
+              <div className="flex items-center justify-between px-4 py-5">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="relative shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                      <GraduationCap className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-background animate-pulse-slow" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <span className="text-base font-bold gradient-text-study tracking-tight block">Mnemo</span>
+                    <span className="text-[10px] text-muted-foreground block -mt-0.5">AI Study Companion</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <Separator />
+
+              {/* AI Badge */}
+              <div className="mx-3 my-3 px-3 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                <span className="text-xs text-indigo-300 font-medium">AI Learning Mode Active</span>
+              </div>
+
+              {/* Nav */}
+              <nav className="flex-1 px-2 pt-2 space-y-0.5 overflow-y-auto no-scrollbar">
+                {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+                  const active = pathname === href || pathname.startsWith(href + '/')
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={handleNavClick}
+                      className={cn(
+                        'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
+                        'transition-all duration-200 group relative min-h-[44px]',
+                        active
+                          ? 'active-nav-item text-indigo-300'
+                          : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
+                      )}
+                    >
+                      <Icon
+                        className={cn(
+                          'shrink-0 transition-colors',
+                          active ? 'text-indigo-400' : 'text-muted-foreground group-hover:text-foreground'
+                        )}
+                        size={18}
+                      />
+                      <span className="truncate">{label}</span>
+                    </Link>
+                  )
+                })}
+              </nav>
+
+              <Separator />
+
+              {/* User section */}
+              <div className="p-3">
+                <div className="flex items-center gap-3 px-1 mb-2">
+                  <Avatar className="w-8 h-8 shrink-0">
+                    <AvatarFallback>{initials}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{user?.name ?? 'Student'}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={handleSignOut}
+                    className="text-muted-foreground hover:text-destructive shrink-0"
+                    title="Sign out"
+                    disabled={isSigningOut}
+                  >
+                    {isSigningOut ? (
+                      <span className="w-3.5 h-3.5 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
+                    ) : (
+                      <LogOut size={15} />
+                    )}
+                  </Button>
+                </div>
+                <ThemeToggle showLabel className="w-full justify-start" />
+              </div>
+            </div>
+          </div>
+        </DialogPortal>
+      </Dialog>
+    )
+  }
+
+  // Desktop sidebar mode
   return (
     <aside
       className={cn(
         'relative flex flex-col h-screen border-r border-white/[0.06] sidebar-gradient',
-        'transition-all duration-300 ease-in-out',
+        'transition-all duration-300 ease-in-out hidden lg:flex',
         sidebarOpen ? 'w-60' : 'w-[72px]'
       )}
     >
@@ -97,7 +223,7 @@ export function Sidebar() {
               href={href}
               className={cn(
                 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
-                'transition-all duration-200 group relative',
+                'transition-all duration-200 group relative min-h-[44px]',
                 active
                   ? 'active-nav-item text-indigo-300'
                   : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'

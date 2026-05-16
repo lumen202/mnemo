@@ -423,20 +423,24 @@ export type Theme = 'dark' | 'light'
 
 interface UIState {
   sidebarOpen: boolean
+  isMobile: boolean
   addMaterialOpen: boolean
   theme: Theme
   toggleSidebar: () => void
   setSidebarOpen: (v: boolean) => void
+  setIsMobile: (v: boolean) => void
   setAddMaterialOpen: (v: boolean) => void
   setTheme: (t: Theme) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
   sidebarOpen: true,
+  isMobile: false,
   addMaterialOpen: false,
   theme: 'dark',
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
+  setIsMobile: (isMobile) => set({ isMobile }),
   setAddMaterialOpen: (addMaterialOpen) => set({ addMaterialOpen }),
   setTheme: (theme) => set({ theme }),
 }))

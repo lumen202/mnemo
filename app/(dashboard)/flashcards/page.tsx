@@ -245,7 +245,7 @@ export default function FlashcardsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {[
           { label: 'Total Cards', value: flashcards.length, color: 'text-indigo-400', bg: 'bg-indigo-500/15' },
           { label: 'Due Today',   value: dueToday.length,   color: 'text-amber-400',  bg: 'bg-amber-500/15'  },
