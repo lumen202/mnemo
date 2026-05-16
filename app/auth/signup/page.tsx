@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { GraduationCap, Eye, EyeOff, ArrowRight, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,26 +15,29 @@ const PERKS = [
 ]
 
 export default function SignupPage() {
-  const router = useRouter()
-  const { signUp, isLoading } = useAuthStore()
+  const { signUp } = useAuthStore()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return
     setError('')
     if (password.length < 8) {
       setError('Password must be at least 8 characters.')
       return
     }
+    setIsSubmitting(true)
     try {
       await signUp(email, password, name)
-      router.push('/dashboard')
+      window.location.href = '/dashboard'
     } catch {
       setError('Something went wrong. Please try again.')
+      setIsSubmitting(false)
     }
   }
 
@@ -140,8 +142,8 @@ export default function SignupPage() {
                 </p>
               )}
 
-              <Button type="submit" className="w-full min-h-[44px]" size="lg" disabled={isLoading}>
-                {isLoading ? (
+              <Button type="submit" className="w-full min-h-[44px]" size="lg" disabled={isSubmitting}>
+                {isSubmitting ? (
                   <span className="flex items-center gap-2">
                     <span className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
                     Creating account...

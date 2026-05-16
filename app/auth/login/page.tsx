@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { GraduationCap, Eye, EyeOff, ArrowRight, Sparkles, FlaskConical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,7 +22,6 @@ function classifyError(err: unknown): string {
 }
 
 export default function LoginPage() {
-  const router = useRouter()
   const { signIn } = useAuthStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -42,7 +40,7 @@ export default function LoginPage() {
     setIsSubmitting(true)
     try {
       await signIn(email, password, rememberMe)
-      router.push('/dashboard')
+      window.location.href = '/dashboard'
     } catch (err) {
       const next = attemptCount + 1
       setAttemptCount(next)
@@ -62,7 +60,7 @@ export default function LoginPage() {
     setIsSubmitting(true)
     try {
       await signIn(e, p, rememberMe)
-      router.push('/dashboard')
+      window.location.href = '/dashboard'
     } catch {
       setError('Something went wrong. Please try again.')
     } finally {
