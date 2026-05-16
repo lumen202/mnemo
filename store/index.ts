@@ -4,7 +4,6 @@ import {
   MOCK_MATERIALS,
   MOCK_SUBJECTS,
   MOCK_INSIGHTS,
-  MOCK_QUIZZES,
   MOCK_SESSIONS,
   MOCK_GOALS,
   SAMPLE_CHAT_MESSAGES,
@@ -310,7 +309,7 @@ export const useQuizStore = create<QuizState>((set) => ({
       const data = await fetchQuizzes(userId)
       set({ quizzes: data, isLoading: false })
     } else {
-      set({ quizzes: MOCK_QUIZZES, isLoading: false })
+      set({ quizzes: [], isLoading: false })
     }
   },
 
