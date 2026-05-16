@@ -1,5 +1,5 @@
 import * as aiClient from '../aiClient'
-import { getDefaultModel } from '../modelRegistry'
+import { getDefaultModel, MODEL_IDS } from '../modelRegistry'
 import { SUMMARIZER_SYSTEM_PROMPT } from '../prompts/summarizerPrompt'
 import type { SummaryResponse } from '../types'
 import type { SubjectId } from '@/types'
@@ -15,61 +15,35 @@ export interface SummaryInput {
 
 export async function run(input: SummaryInput): Promise<SummaryResponse> {
   if (!aiClient.isConfigured()) {
-    await new Promise((r) => setTimeout(r, 700 + Math.random() * 400))
-    return mockSummary(input.title)
+    throw new Error('OPENROUTER_API_KEY is not configured. Add it to .env.local to enable AI summarization.')
   }
 
-  try {
-    const messages: aiClient.Message[] = [
-      { role: 'system', content: SUMMARIZER_SYSTEM_PROMPT },
-      {
-        role: 'user',
-        content: `Study material title: "${input.title}"\n\nContent:\n${input.content}`,
-      },
-    ]
+  const messages: aiClient.Message[] = [
+    { role: 'system', content: SUMMARIZER_SYSTEM_PROMPT },
+    {
+      role: 'user',
+      content: `Study material title: "${input.title}"\n\nContent:\n${input.content}`,
+    },
+  ]
 
-    const result = await aiClient.chat(messages, {
-      model: getDefaultModel('summarization'),
-      maxTokens: 800,
-      temperature: 0.3,
-    })
+  const result = await aiClient.chat(messages, {
+    model: getDefaultModel('summarization'),
+    fallbackModel: MODEL_IDS.openrouterFree,
+    maxTokens: 800,
+    temperature: 0.3,
+  })
 
-    const parsed = aiClient.extractJson<{ summary: string; keyPoints: string[]; suggestedSubject?: SubjectId }>(result.content)
+  const parsed = aiClient.extractJson<{ summary: string; keyPoints: string[]; suggestedSubject?: SubjectId }>(result.content)
 
-    if (!parsed || !parsed.summary || !Array.isArray(parsed.keyPoints)) {
-      return {
-        summary: result.content,
-        keyPoints: [],
-        model: result.model,
-        tokensUsed: result.tokensUsed,
-      }
-    }
-
-    return {
-      summary: parsed.summary,
-      keyPoints: parsed.keyPoints,
-      suggestedSubject: parsed.suggestedSubject,
-      model: result.model,
-      tokensUsed: result.tokensUsed,
-    }
-  } catch {
-    return mockSummary(input.title)
+  if (!parsed || !parsed.summary || !Array.isArray(parsed.keyPoints)) {
+    throw new Error('AI failed to generate a valid summary. The model returned an unexpected response format — please try again.')
   }
-}
 
-// ─── Mock ─────────────────────────────────────────────────────────────────────
-
-function mockSummary(title: string): SummaryResponse {
   return {
-    summary: `"${title}" covers core theoretical foundations and practical applications of the subject matter. The material establishes key definitions, works through canonical examples, and connects concepts to real-world contexts. Mastery requires understanding both the formal rules and the intuition behind when and why to apply each technique.`,
-    keyPoints: [
-      'Core definitions establish the vocabulary needed to reason precisely about the subject.',
-      'The fundamental theorem or algorithm ties together the key ideas and serves as the main analytical tool.',
-      'Common edge cases and failure modes must be understood to apply techniques correctly.',
-      'Complexity analysis (time/space or mathematical bounds) determines when a method is appropriate.',
-      'The technique connects to adjacent topics — understanding these bridges accelerates mastery.',
-    ],
-    model: 'mock',
-    tokensUsed: 0,
+    summary: parsed.summary,
+    keyPoints: parsed.keyPoints,
+    suggestedSubject: parsed.suggestedSubject,
+    model: result.model,
+    tokensUsed: result.tokensUsed,
   }
 }

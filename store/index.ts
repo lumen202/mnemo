@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import type { StudyMaterial, Subject, ChatMessage, ChatSession, User, AIInsight, Flashcard, Quiz, StudySession, StudyGoal } from '@/types'
 import {
-  MOCK_MATERIALS,
   MOCK_SUBJECTS,
   MOCK_INSIGHTS,
   MOCK_SESSIONS,
@@ -157,7 +156,7 @@ export const useStudyMaterialStore = create<StudyMaterialState>((set) => ({
       const data = await fetchMaterials(userId)
       set({ materials: data, isLoading: false })
     } else {
-      set({ materials: MOCK_MATERIALS, isLoading: false })
+      set({ materials: [], isLoading: false })
     }
   },
 
