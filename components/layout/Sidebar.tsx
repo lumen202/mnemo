@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -12,6 +13,14 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 const NAV_ITEMS = [
   { href: '/dashboard',  label: 'Dashboard',      icon: LayoutDashboard },
@@ -27,10 +36,16 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { sidebarOpen, toggleSidebar } = useUIStore()
-  const { user, signOut } = useAuthStore()
+  const { user, signOut, isSigningOut } = useAuthStore()
+  const [signOutDialogOpen, setSignOutDialogOpen] = useState(false)
 
-  const handleSignOut = async () => {
+  const handleSignOut = () => {
+    setSignOutDialogOpen(true)
+  }
+
+  const confirmSignOut = async () => {
     await signOut()
+    setSignOutDialogOpen(false)
     router.push('/')
   }
 
@@ -126,8 +141,13 @@ export function Sidebar() {
                 onClick={handleSignOut}
                 className="text-muted-foreground hover:text-destructive shrink-0"
                 title="Sign out"
+                disabled={isSigningOut}
               >
-                <LogOut size={15} />
+                {isSigningOut ? (
+                  <span className="w-3.5 h-3.5 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
+                ) : (
+                  <LogOut size={15} />
+                )}
               </Button>
             </div>
             <ThemeToggle showLabel className="w-full justify-start" />
@@ -143,8 +163,13 @@ export function Sidebar() {
               size="icon-sm"
               onClick={handleSignOut}
               className="text-muted-foreground hover:text-destructive"
+              disabled={isSigningOut}
             >
-              <LogOut size={15} />
+              {isSigningOut ? (
+                <span className="w-3.5 h-3.5 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
+              ) : (
+                <LogOut size={15} />
+              )}
             </Button>
           </>
         )}
@@ -163,6 +188,42 @@ export function Sidebar() {
       >
         {sidebarOpen ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
       </button>
+
+      {/* Sign Out Confirmation Dialog */}
+      <Dialog open={signOutDialogOpen} onOpenChange={setSignOutDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Sign out of Mnemo?</DialogTitle>
+            <DialogDescription>
+              Your study data is saved and will be here when you return.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSignOutDialogOpen(false)}
+              disabled={isSigningOut}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmSignOut}
+              disabled={isSigningOut}
+              className="gap-2"
+            >
+              {isSigningOut ? (
+                <>
+                  <span className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                  Signing out...
+                </>
+              ) : (
+                'Sign out'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </aside>
   )
 }
