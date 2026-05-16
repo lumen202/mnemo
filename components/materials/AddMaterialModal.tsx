@@ -149,21 +149,28 @@ export function AddMaterialModal() {
 
   async function save() {
     setIsSaving(true)
-    const source = uploadFile ? await uploadToStorage(uploadFile) : null
-    await addMaterial({
-      title,
-      subject: detectedSubject,
-      type: materialType,
-      status: 'summarized',
-      uploadDate: new Date().toISOString().slice(0, 10),
-      summary,
-      keyPoints: keyPoints.length > 0 ? keyPoints : undefined,
-      content: content.trim() || undefined,
-      wordCount: content.trim() ? content.split(/\s+/).filter(Boolean).length : undefined,
-      source: source ?? undefined,
-    }).catch(() => {})
-    setIsSaving(false)
-    close()
+    setError('')
+    try {
+      const source = uploadFile ? await uploadToStorage(uploadFile) : null
+      await addMaterial({
+        title,
+        subject: detectedSubject,
+        type: materialType,
+        status: 'summarized',
+        uploadDate: new Date().toISOString().slice(0, 10),
+        summary,
+        keyPoints: keyPoints.length > 0 ? keyPoints : undefined,
+        content: content.trim() || undefined,
+        wordCount: content.trim() ? content.split(/\s+/).filter(Boolean).length : undefined,
+        source: source ?? undefined,
+      })
+      close()
+    } catch (err) {
+      console.error('Save material failed:', err)
+      setError(err instanceof Error ? err.message : 'Failed to save. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
