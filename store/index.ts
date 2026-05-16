@@ -162,12 +162,13 @@ export const useStudyMaterialStore = create<StudyMaterialState>((set) => ({
   },
 
   addMaterial: async (m) => {
+    const userId = useAuthStore.getState().user?.id ?? 'user_demo'
     const tempId = `mat_${Date.now()}`
     set((state) => ({
-      materials: [{ ...m, id: tempId, userId: 'user_demo' }, ...state.materials],
+      materials: [{ ...m, id: tempId, userId }, ...state.materials],
     }))
     if (isSupabaseConfigured()) {
-      await insertMaterial('user_demo', m)
+      await insertMaterial(userId, m)
     }
   },
 
@@ -261,11 +262,12 @@ export const useFlashcardStore = create<FlashcardState>((set) => ({
   },
 
   addFlashcard: async (f) => {
+    const userId = useAuthStore.getState().user?.id ?? 'user_demo'
     set((state) => ({
-      flashcards: [{ ...f, id: `fc_${Date.now()}`, userId: 'user_demo' }, ...state.flashcards],
+      flashcards: [{ ...f, id: `fc_${Date.now()}`, userId }, ...state.flashcards],
     }))
     if (isSupabaseConfigured()) {
-      await insertFlashcard('user_demo', f)
+      await insertFlashcard(userId, f)
     }
   },
 
@@ -316,9 +318,10 @@ export const useQuizStore = create<QuizState>((set) => ({
   setActiveQuiz: (quiz) => set({ activeQuiz: quiz }),
 
   addQuiz: async (q) => {
+    const userId = useAuthStore.getState().user?.id ?? 'user_demo'
     set((state) => ({ quizzes: [q, ...state.quizzes] }))
     if (isSupabaseConfigured()) {
-      await insertQuiz('user_demo', {
+      await insertQuiz(userId, {
         subjectId: q.subjectId,
         title: q.title,
         questions: q.questions,
@@ -377,11 +380,12 @@ export const useStudySessionStore = create<StudySessionState>((set) => ({
   },
 
   addSession: async (s) => {
+    const userId = useAuthStore.getState().user?.id ?? 'user_demo'
     set((state) => ({
-      sessions: [{ ...s, id: `ses_${Date.now()}`, userId: 'user_demo' }, ...state.sessions],
+      sessions: [{ ...s, id: `ses_${Date.now()}`, userId }, ...state.sessions],
     }))
     if (isSupabaseConfigured()) {
-      await insertSession('user_demo', s)
+      await insertSession(userId, s)
     }
   },
 
