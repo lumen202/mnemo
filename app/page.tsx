@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import {
   Brain, Sparkles, Shield, ArrowRight, CheckCircle2,
@@ -98,8 +100,6 @@ const CHECKLIST = [
   'Works with any subject',
   'Free plan — always',
 ]
-
-'use client'
 
 function LandingNav() {
   const [menuOpen, setMenuOpen] = React.useState(false)
