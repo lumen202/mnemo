@@ -1,12 +1,14 @@
 // ─── Model IDs ────────────────────────────────────────────────────────────────
 
 export const MODEL_IDS = {
-  // Testing default — free, covers all tasks
-  gptOss120b:   'openai/gpt-oss-120b:free',
-  // Free tier
+  // OpenRouter free router — dispatches to available free models automatically
+  openrouterFree: 'openrouter/free',
+  // Specific free models (kept for reference / manual override)
+  qwen3Next80b: 'qwen/qwen3-next-80b-a3b-instruct:free',
   qwen32b:      'qwen/qwen3-32b:free',
   deepseek:     'deepseek/deepseek-chat:free',
   geminiFlash:  'google/gemini-flash-1.5',
+  gptOss120b:   'openai/gpt-oss-120b:free',
   // Premium tier — swap in when ready
   gpt4oMini:    'openai/gpt-4o-mini',
   claudeHaiku:  'anthropic/claude-haiku-4-5-20251001',
@@ -33,13 +35,13 @@ export interface ModelConfig {
 
 export const MODEL_REGISTRY: ModelConfig[] = [
   {
-    id: MODEL_IDS.gptOss120b,
-    label: 'GPT-OSS 120B',
+    id: MODEL_IDS.qwen3Next80b,
+    label: 'Qwen3 Next 80B (MoE)',
     tier: 'free',
     contextWindow: 128000,
-    strengths: ['reasoning', 'instruction-following', 'JSON', 'long-form'],
-    defaultFor: ['tutoring', 'summarization', 'flashcards', 'quiz', 'insights'],
-    notes: 'Testing default — covers all task types on the free tier',
+    strengths: ['reasoning', 'instruction-following', 'speed', 'long-form', 'pedagogy'],
+    defaultFor: ['tutoring'],
+    notes: 'MoE architecture (~3B active params) — fast inference, strong reasoning, free tier',
   },
   {
     id: MODEL_IDS.qwen32b,
@@ -47,8 +49,17 @@ export const MODEL_REGISTRY: ModelConfig[] = [
     tier: 'free',
     contextWindow: 32768,
     strengths: ['reasoning', 'math', 'coding', 'step-by-step'],
-    defaultFor: ['tutoring', 'quiz'],
-    notes: 'Best free model for pedagogical explanations and quiz generation',
+    defaultFor: ['quiz'],
+    notes: 'Best free model for quiz generation and structured pedagogical Q&A',
+  },
+  {
+    id: MODEL_IDS.gptOss120b,
+    label: 'GPT-OSS 120B',
+    tier: 'free',
+    contextWindow: 128000,
+    strengths: ['reasoning', 'instruction-following', 'JSON', 'long-form'],
+    defaultFor: [],
+    notes: 'Fallback free model — covers all task types',
   },
   {
     id: MODEL_IDS.deepseek,
@@ -99,9 +110,8 @@ export const MODEL_REGISTRY: ModelConfig[] = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-export function getDefaultModel(task: TaskType): ModelId {
-  const match = MODEL_REGISTRY.find((m) => m.defaultFor.includes(task))
-  return match?.id ?? MODEL_IDS.gptOss120b
+export function getDefaultModel(_task: TaskType): ModelId {
+  return MODEL_IDS.openrouterFree
 }
 
 export function getModelConfig(id: string): ModelConfig | undefined {

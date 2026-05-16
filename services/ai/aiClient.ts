@@ -135,6 +135,80 @@ export async function chat(messages: Message[], opts: ChatOptions = {}): Promise
   throw lastErr
 }
 
+// Streams tokens from OpenRouter as an async generator. Caller receives raw
+// content delta strings; caller is responsible for stripping think-tags.
+export async function* chatStream(
+  messages: Message[],
+  opts: ChatOptions = {}
+): AsyncGenerator<string> {
+  checkRateLimit()
+
+  const model = opts.model ?? getDefaultModel('tutoring')
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS
+
+  const controller = new AbortController()
+  const timerId = setTimeout(() => controller.abort(), timeoutMs)
+
+  let res: Response
+  try {
+    res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${getApiKey()}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
+        'X-Title': 'Mnemo',
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens: opts.maxTokens ?? 1024,
+        temperature: opts.temperature ?? 0.7,
+        stream: true,
+      }),
+      signal: controller.signal,
+    })
+  } finally {
+    clearTimeout(timerId)
+  }
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`OpenRouter ${res.status}: ${body || res.statusText}`)
+  }
+
+  const reader = res.body!.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        const data = line.slice(6).trim()
+        if (data === '[DONE]') return
+
+        try {
+          const json = JSON.parse(data)
+          const token: string = json.choices?.[0]?.delta?.content ?? ''
+          if (token) yield token
+        } catch {
+          // ignore malformed SSE lines
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock()
+  }
+}
+
 // ─── Structured Output Helper ─────────────────────────────────────────────────
 
 // Extracts JSON from model output — handles markdown code fences gracefully

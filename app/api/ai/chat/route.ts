@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { run } from '@/services/ai/agents/tutorAgent'
-import { apiError, badRequest } from '@/lib/api'
+import * as aiClient from '@/services/ai/aiClient'
+import { getDefaultModel } from '@/services/ai/modelRegistry'
+import { TUTOR_SYSTEM_PROMPT } from '@/services/ai/prompts/tutorPrompt'
+import { run as runMock } from '@/services/ai/agents/tutorAgent'
+import { badRequest, apiError } from '@/lib/api'
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,12 +13,53 @@ export async function POST(req: NextRequest) {
       return badRequest('message is required')
     }
 
-    const result = await run({
-      message: body.message.trim(),
-      context: body.context,
+    const message = body.message.trim()
+
+    // Mock mode — no API key configured, return JSON as before
+    if (!aiClient.isConfigured()) {
+      const result = await runMock({ message, context: body.context })
+      return NextResponse.json(result)
+    }
+
+    // Live mode — stream tokens back to the client
+    const messages: aiClient.Message[] = [
+      { role: 'system', content: TUTOR_SYSTEM_PROMPT },
+      ...(body.context
+        ? [
+            { role: 'user' as const, content: `My study context:\n${body.context}` },
+            { role: 'assistant' as const, content: 'Got it — I have your study context. What would you like to explore?' },
+          ]
+        : []),
+      { role: 'user', content: message },
+    ]
+
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const token of aiClient.chatStream(messages, {
+            model: getDefaultModel('tutoring'),
+            maxTokens: 1024,
+            temperature: 0.7,
+          })) {
+            controller.enqueue(encoder.encode(token))
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'AI error'
+          controller.enqueue(encoder.encode(`\n\n*Sorry, something went wrong: ${msg}. Please try again.*`))
+        } finally {
+          controller.close()
+        }
+      },
     })
 
-    return NextResponse.json(result)
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store',
+        'X-Content-Type-Options': 'nosniff',
+      },
+    })
   } catch (err) {
     return apiError(err)
   }

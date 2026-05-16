@@ -139,6 +139,13 @@ export interface ChatMessage {
   isLoading?: boolean
 }
 
+export interface ChatSession {
+  id: string
+  title: string
+  createdAt: string
+  messages: ChatMessage[]
+}
+
 // ─── Study Analytics ──────────────────────────────────────────────────────────
 
 export interface SubjectStudy {

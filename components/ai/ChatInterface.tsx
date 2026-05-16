@@ -11,9 +11,19 @@ import { SUGGESTED_QUESTIONS } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 import type { TutorResponse } from '@/services/ai/types'
 
+// Remove <think>...</think> blocks that Qwen3 models emit.
+// Strips complete blocks and hides any in-progress (unclosed) block during streaming.
+function stripThinking(text: string): string {
+  let out = text.replace(/<think>[\s\S]*?<\/think>/g, '')
+  const openIdx = out.lastIndexOf('<think>')
+  if (openIdx !== -1) out = out.slice(0, openIdx)
+  return out.trim()
+}
+
 export function ChatInterface() {
-  const { messages, isTyping, addMessage, setTyping, clearChat } = useAIStore()
+  const { messages, isTyping, addMessage, updateMessage, setTyping, clearChat } = useAIStore()
   const [input, setInput] = useState('')
+  const [isStreaming, setIsStreaming] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -24,7 +34,7 @@ export function ChatInterface() {
   }, [messages, isTyping])
 
   const sendMessage = async (content: string) => {
-    if (!content.trim() || isTyping) return
+    if (!content.trim() || isTyping || isStreaming) return
 
     addMessage({
       id: `msg_${Date.now()}`,
@@ -35,6 +45,8 @@ export function ChatInterface() {
     setInput('')
     setTyping(true)
 
+    const assistantId = `msg_${Date.now() + 1}`
+
     try {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
@@ -42,26 +54,55 @@ export function ChatInterface() {
         body: JSON.stringify({ message: content.trim() }),
       })
 
-      const data: TutorResponse | { error: string } = await res.json()
-      const responseContent = 'error' in data
-        ? 'Sorry, I ran into an error. Please try again.'
-        : data.content
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
-      addMessage({
-        id: `msg_${Date.now() + 1}`,
-        role: 'assistant',
-        content: responseContent,
-        timestamp: new Date().toISOString(),
-      })
+      const contentType = res.headers.get('content-type') ?? ''
+
+      if (contentType.includes('text/plain') && res.body) {
+        // Streaming mode — add placeholder message and stream tokens into it
+        addMessage({ id: assistantId, role: 'assistant', content: '', timestamp: new Date().toISOString() })
+        setTyping(false)
+        setIsStreaming(true)
+
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let raw = ''
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          raw += decoder.decode(value, { stream: true })
+          const display = stripThinking(raw)
+          updateMessage(assistantId, display || '…')
+        }
+
+        const final = stripThinking(raw)
+        updateMessage(
+          assistantId,
+          final || 'I had trouble generating a response. Please try again.'
+        )
+      } else {
+        // JSON mode (mock / fallback)
+        const data: TutorResponse | { error: string } = await res.json()
+        const responseContent =
+          'error' in data ? 'Sorry, I ran into an error. Please try again.' : data.content
+        addMessage({ id: assistantId, role: 'assistant', content: responseContent, timestamp: new Date().toISOString() })
+        setTyping(false)
+      }
     } catch {
-      addMessage({
-        id: `msg_${Date.now() + 1}`,
-        role: 'assistant',
-        content: 'Connection issue — please check your network and try again.',
-        timestamp: new Date().toISOString(),
-      })
-    } finally {
+      if (messages.find((m) => m.id === assistantId)) {
+        updateMessage(assistantId, 'Connection issue — please check your network and try again.')
+      } else {
+        addMessage({
+          id: assistantId,
+          role: 'assistant',
+          content: 'Connection issue — please check your network and try again.',
+          timestamp: new Date().toISOString(),
+        })
+      }
       setTyping(false)
+    } finally {
+      setIsStreaming(false)
     }
   }
 
@@ -72,6 +113,8 @@ export function ChatInterface() {
     }
   }
 
+  const isBusy = isTyping || isStreaming
+
   return (
     <div className="flex flex-col h-full">
       {/* Messages */}
@@ -80,12 +123,12 @@ export function ChatInterface() {
           {messages.map((msg) => (
             <AssistantMessage key={msg.id} message={msg} />
           ))}
-          {isTyping && <TypingIndicator />}
+          {isTyping && !isStreaming && <TypingIndicator />}
         </div>
       </ScrollArea>
 
       {/* Suggested questions */}
-      {messages.length <= 1 && !isTyping && (
+      {messages.length <= 1 && !isBusy && (
         <div className="px-4 pb-2">
           <p className="text-xs text-muted-foreground mb-2 text-center">Try asking...</p>
           <div className="flex flex-wrap gap-2 justify-center max-w-2xl mx-auto">
@@ -124,6 +167,7 @@ export function ChatInterface() {
                 variant="ghost"
                 size="icon-sm"
                 onClick={clearChat}
+                disabled={isBusy}
                 className="text-muted-foreground hover:text-foreground"
                 title="Clear chat"
               >
@@ -132,7 +176,7 @@ export function ChatInterface() {
               <Button
                 size="icon-sm"
                 onClick={() => sendMessage(input)}
-                disabled={!input.trim() || isTyping}
+                disabled={!input.trim() || isBusy}
                 className="rounded-xl"
               >
                 <Send size={14} />

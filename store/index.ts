@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { StudyMaterial, Subject, ChatMessage, User, AIInsight, Flashcard, Quiz, StudySession, StudyGoal } from '@/types'
+import type { StudyMaterial, Subject, ChatMessage, ChatSession, User, AIInsight, Flashcard, Quiz, StudySession, StudyGoal } from '@/types'
 import {
   MOCK_MATERIALS,
   MOCK_SUBJECTS,
@@ -391,17 +391,33 @@ export const useStudySessionStore = create<StudySessionState>((set) => ({
 
 // ─── AI / Chat Store ───────────────────────────────────────────────────────────
 
+const INITIAL_SESSION_ID = 'session_initial'
+const INITIAL_SESSION: ChatSession = {
+  id: INITIAL_SESSION_ID,
+  title: 'Getting Started',
+  createdAt: new Date().toISOString(),
+  messages: SAMPLE_CHAT_MESSAGES,
+}
+
 interface AIState {
-  messages: ChatMessage[]
+  sessions: ChatSession[]
+  activeSessionId: string
+  messages: ChatMessage[]       // mirrors active session — kept for component compat
   insights: AIInsight[]
   isTyping: boolean
   addMessage: (msg: ChatMessage) => void
+  updateMessage: (id: string, content: string) => void
   setTyping: (v: boolean) => void
   clearChat: () => void
+  newSession: () => void
+  switchSession: (id: string) => void
+  deleteSession: (id: string) => void
   loadInsights: (userId: string) => Promise<void>
 }
 
 export const useAIStore = create<AIState>((set) => ({
+  sessions: [INITIAL_SESSION],
+  activeSessionId: INITIAL_SESSION_ID,
   messages: SAMPLE_CHAT_MESSAGES,
   insights: [],
   isTyping: false,
@@ -416,11 +432,67 @@ export const useAIStore = create<AIState>((set) => ({
   },
 
   addMessage: (msg) =>
-    set((state) => ({ messages: [...state.messages, msg] })),
+    set((state) => {
+      const updated = [...state.messages, msg]
+      // Auto-title new sessions from the first user message
+      const sessions = state.sessions.map((s) => {
+        if (s.id !== state.activeSessionId) return s
+        const title =
+          s.title === 'New Chat' && msg.role === 'user'
+            ? msg.content.slice(0, 42) + (msg.content.length > 42 ? '…' : '')
+            : s.title
+        return { ...s, messages: updated, title }
+      })
+      return { messages: updated, sessions }
+    }),
+
+  updateMessage: (id, content) =>
+    set((state) => {
+      const updated = state.messages.map((m) => (m.id === id ? { ...m, content } : m))
+      const sessions = state.sessions.map((s) =>
+        s.id === state.activeSessionId ? { ...s, messages: updated } : s
+      )
+      return { messages: updated, sessions }
+    }),
 
   setTyping: (isTyping) => set({ isTyping }),
 
-  clearChat: () => set({ messages: SAMPLE_CHAT_MESSAGES }),
+  clearChat: () =>
+    set((state) => ({
+      messages: [],
+      sessions: state.sessions.map((s) =>
+        s.id === state.activeSessionId ? { ...s, messages: [] } : s
+      ),
+    })),
+
+  newSession: () =>
+    set((state) => {
+      const id = `session_${Date.now()}`
+      const fresh: ChatSession = { id, title: 'New Chat', createdAt: new Date().toISOString(), messages: [] }
+      return { sessions: [...state.sessions, fresh], activeSessionId: id, messages: [] }
+    }),
+
+  switchSession: (id) =>
+    set((state) => {
+      const session = state.sessions.find((s) => s.id === id)
+      if (!session) return state
+      return { activeSessionId: id, messages: session.messages }
+    }),
+
+  deleteSession: (id) =>
+    set((state) => {
+      const remaining = state.sessions.filter((s) => s.id !== id)
+      if (remaining.length === 0) {
+        const newId = `session_${Date.now()}`
+        const fresh: ChatSession = { id: newId, title: 'New Chat', createdAt: new Date().toISOString(), messages: [] }
+        return { sessions: [fresh], activeSessionId: newId, messages: [] }
+      }
+      if (id === state.activeSessionId) {
+        const next = remaining[remaining.length - 1]
+        return { sessions: remaining, activeSessionId: next.id, messages: next.messages }
+      }
+      return { sessions: remaining }
+    }),
 }))
 
 // ─── UI Store ──────────────────────────────────────────────────────────────────
