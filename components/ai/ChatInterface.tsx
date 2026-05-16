@@ -75,13 +75,14 @@ export function ChatInterface() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subject, content: topic, count: 6 }),
       })
-      if (!res.ok) throw new Error('Generation failed')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: 'Generation failed' }))
+        throw new Error(errBody.error ?? `HTTP ${res.status}`)
+      }
 
       const data: FlashcardResponse = await res.json()
       const cards = data.flashcards ?? []
 
-      // set() inside addFlashcard is synchronous — cards land in Zustand immediately.
-      // Supabase writes are best-effort; errors here must not block the success message.
       cards.forEach((fc) =>
         addFlashcard({ subjectId: data.subject, front: fc.front, back: fc.back, difficulty: fc.difficulty, timesReviewed: 0 })
           .catch(() => {})
@@ -91,8 +92,9 @@ export function ChatInterface() {
         assistantId,
         `I've generated **${cards.length} flashcards** on *${topic}* and added them to your deck!\n\n[→ View your flashcards](/flashcards)`
       )
-    } catch {
-      updateMessage(assistantId, 'I had trouble generating flashcards. Please try again or visit the Flashcards page directly.')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Generation failed'
+      updateMessage(assistantId, `I had trouble generating flashcards: ${msg}. Please try again or visit the Flashcards page to generate them directly.`)
     } finally {
       setTyping(false)
       setFlashcardState(null)

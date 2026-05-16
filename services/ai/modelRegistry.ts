@@ -86,7 +86,7 @@ export const MODEL_REGISTRY: ModelConfig[] = [
     tier: 'cheap',
     contextWindow: 1048576,
     strengths: ['speed', 'long-context', 'documents', 'flashcards'],
-    defaultFor: ['flashcards'],
+    defaultFor: [],
     notes: 'Massive context window — ideal for full-document flashcard generation',
   },
   {

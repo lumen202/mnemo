@@ -4,6 +4,8 @@ import { Sparkles, FlipHorizontal, ChevronLeft, ChevronRight, RotateCcw, Check, 
 import { GlassCard } from '@/components/common/GlassCard'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useFlashcardStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
 import { cn } from '@/lib/utils'
@@ -150,31 +152,46 @@ function FlashcardViewer({ cards }: { cards: Flashcard[] }) {
 
 // ─── Generate Banner ──────────────────────────────────────────────────────────
 
+const SUBJECT_OPTIONS: SubjectId[] = [
+  'mathematics', 'computer-science', 'physics', 'machine-learning',
+  'biology', 'chemistry', 'history', 'economics', 'philosophy', 'literature', 'other',
+]
+
 function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void }) {
   const { addFlashcard } = useFlashcardStore()
+  const [subject, setSubject] = useState<SubjectId>('computer-science')
+  const [topic, setTopic] = useState('')
+  const [count, setCount] = useState(6)
   const [isGenerating, setIsGenerating] = useState(false)
   const [lastCount, setLastCount] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const handleGenerate = async () => {
+    if (!topic.trim()) return
     setIsGenerating(true)
     setLastCount(null)
+    setError(null)
 
     try {
       const res = await fetch('/api/ai/flashcards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          subject: 'computer-science',
-          content: 'Data structures and algorithms: binary search, dynamic programming, trees, graphs, sorting algorithms, hash tables, recursion, complexity analysis.',
-          count: 6,
+          subject,
+          content: topic.trim(),
+          count,
         }),
       })
 
-      if (!res.ok) throw new Error('Generation failed')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: 'Generation failed' }))
+        throw new Error(errBody.error ?? `HTTP ${res.status}`)
+      }
 
       const data: FlashcardResponse = await res.json()
+      const cards = data.flashcards ?? []
 
-      data.flashcards.forEach((fc) => {
+      cards.forEach((fc) => {
         addFlashcard({
           subjectId: data.subject,
           front: fc.front,
@@ -184,10 +201,13 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
         })
       })
 
-      setLastCount(data.flashcards.length)
-      onGenerated(data.flashcards.length)
-    } catch {
+      setLastCount(cards.length)
+      onGenerated(cards.length)
+      setTopic('')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Generation failed'
       setLastCount(-1)
+      setError(msg)
     } finally {
       setIsGenerating(false)
     }
@@ -195,29 +215,84 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
 
   return (
     <GlassCard className="p-5" glow="indigo">
-      <div className="flex items-center gap-4">
-        <div className="w-9 h-9 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
-          <Sparkles className="w-4.5 h-4.5 text-indigo-400" />
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
+          <Sparkles className="w-4 h-4 text-indigo-400" />
         </div>
-        <div className="flex-1">
+        <div>
           <h3 className="text-sm font-semibold text-foreground">AI Flashcard Generator</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {lastCount === null
-              ? 'Select a study material and Mnemo will automatically generate contextual flashcards using spaced repetition principles.'
-              : lastCount === -1
-                ? 'Generation failed. Please try again.'
-                : `✓ Added ${lastCount} new flashcards to your deck.`}
-          </p>
+          <p className="text-xs text-muted-foreground">Select a subject and describe the topic you want flashcards for.</p>
         </div>
-        <Button
-          size="sm"
-          className="gap-1.5 shrink-0"
-          onClick={handleGenerate}
-          disabled={isGenerating}
-        >
-          {isGenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-          {isGenerating ? 'Generating...' : 'Generate'}
-        </Button>
+      </div>
+
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-medium text-muted-foreground">Subject</label>
+            <Select value={subject} onValueChange={(v) => setSubject(v as SubjectId)}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SUBJECT_OPTIONS.map((s) => (
+                  <SelectItem key={s} value={s}>{SUBJECT_META[s]?.label ?? s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-medium text-muted-foreground">Number of cards</label>
+            <Select
+              value={String(count)}
+              onValueChange={(v) => setCount(Number(v))}
+            >
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[3, 4, 5, 6, 8, 10].map((n) => (
+                  <SelectItem key={n} value={String(n)}>{n} cards</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-medium text-muted-foreground">Topic / content to study</label>
+          <Textarea
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="e.g. Integration by parts, Binary search trees, Wave-particle duality, World War II causes..."
+            className="h-20 text-sm resize-none"
+            disabled={isGenerating}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault()
+                handleGenerate()
+              }
+            }}
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            size="sm"
+            className="gap-1.5"
+            onClick={handleGenerate}
+            disabled={isGenerating || !topic.trim()}
+          >
+            {isGenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+            {isGenerating ? 'Generating...' : 'Generate Flashcards'}
+          </Button>
+
+          {lastCount !== null && lastCount > 0 && (
+            <span className="text-xs text-emerald-400">+{lastCount} cards added to your deck</span>
+          )}
+          {error && (
+            <span className="text-xs text-rose-400">{error}</span>
+          )}
+        </div>
       </div>
     </GlassCard>
   )

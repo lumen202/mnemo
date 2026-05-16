@@ -4,7 +4,6 @@ import {
   MOCK_MATERIALS,
   MOCK_SUBJECTS,
   MOCK_INSIGHTS,
-  MOCK_FLASHCARDS,
   MOCK_QUIZZES,
   MOCK_SESSIONS,
   MOCK_GOALS,
@@ -250,10 +249,14 @@ export const useFlashcardStore = create<FlashcardState>((set) => ({
   loadFlashcards: async (userId) => {
     set({ isLoading: true })
     if (isSupabaseConfigured()) {
-      const data = await fetchFlashcards(userId)
-      set({ flashcards: data, isLoading: false })
+      try {
+        const data = await fetchFlashcards(userId)
+        set({ flashcards: data, isLoading: false })
+      } catch {
+        set({ flashcards: [], isLoading: false })
+      }
     } else {
-      set({ flashcards: MOCK_FLASHCARDS, isLoading: false })
+      set({ flashcards: [], isLoading: false })
     }
   },
 
