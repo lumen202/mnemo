@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, BookOpen, Layers, Brain, LogOut,
   GraduationCap, ChevronLeft, ChevronRight, Sparkles,
@@ -25,8 +25,14 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const { sidebarOpen, toggleSidebar } = useUIStore()
   const { user, signOut } = useAuthStore()
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/')
+  }
 
   const initials = user?.name
     ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -117,7 +123,7 @@ export function Sidebar() {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                onClick={signOut}
+                onClick={handleSignOut}
                 className="text-muted-foreground hover:text-destructive shrink-0"
                 title="Sign out"
               >
@@ -135,7 +141,7 @@ export function Sidebar() {
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={signOut}
+              onClick={handleSignOut}
               className="text-muted-foreground hover:text-destructive"
             >
               <LogOut size={15} />
