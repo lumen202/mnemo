@@ -2,17 +2,23 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { GraduationCap, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react'
+import { GraduationCap, Eye, EyeOff, ArrowRight, Sparkles, FlaskConical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/store'
+import { isSupabaseConfigured } from '@/lib/env'
+
+const DEMO_EMAIL = 'demo@mnemo.test'
+const DEMO_PASSWORD = 'demo123456'
+const TEST_EMAIL = 'test@mnemo.test'
+const TEST_PASSWORD = 'test123456'
 
 export default function LoginPage() {
   const router = useRouter()
   const { signIn, isLoading } = useAuthStore()
-  const [email, setEmail] = useState('alex@mnemo.app')
-  const [password, setPassword] = useState('demo1234')
+  const [email, setEmail] = useState(isSupabaseConfigured() ? DEMO_EMAIL : 'alex@mnemo.app')
+  const [password, setPassword] = useState(isSupabaseConfigured() ? DEMO_PASSWORD : 'demo1234')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
 
@@ -24,6 +30,18 @@ export default function LoginPage() {
       router.push('/dashboard')
     } catch {
       setError('Invalid credentials. Try the demo account.')
+    }
+  }
+
+  const quickLogin = async (e: string, p: string) => {
+    setEmail(e)
+    setPassword(p)
+    setError('')
+    try {
+      await signIn(e, p)
+      router.push('/dashboard')
+    } catch {
+      setError('Quick login failed. Is the database seeded?')
     }
   }
 
@@ -48,7 +66,15 @@ export default function LoginPage() {
         <div className="glass border border-indigo-500/25 rounded-xl p-3.5 mb-5 flex items-start gap-2.5">
           <Sparkles size={14} className="text-indigo-400 shrink-0 mt-0.5" />
           <p className="text-xs text-muted-foreground">
-            <span className="text-indigo-300 font-medium">Demo mode:</span> Use the pre-filled credentials to explore the full app with realistic study data and AI responses.
+            {isSupabaseConfigured() ? (
+              <>
+                <span className="text-indigo-300 font-medium">Supabase connected:</span> Use <strong>demo@mnemo.test</strong> (seeded data) or <strong>test@mnemo.test</strong> (empty) for testing.
+              </>
+            ) : (
+              <>
+                <span className="text-indigo-300 font-medium">Demo mode:</span> Use the pre-filled credentials to explore the full app with realistic study data and AI responses.
+              </>
+            )}
           </p>
         </div>
 
@@ -124,14 +150,40 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            className="w-full"
-            size="lg"
-            onClick={() => { setEmail('alex@mnemo.app'); setPassword('demo1234') }}
-          >
-            Use demo account
-          </Button>
+          {isSupabaseConfigured() ? (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground text-center">Quick Login (Dev Only)</p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  size="lg"
+                  onClick={() => quickLogin(DEMO_EMAIL, DEMO_PASSWORD)}
+                >
+                  <Sparkles size={14} className="mr-2" />
+                  Demo (seeded)
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  size="lg"
+                  onClick={() => quickLogin(TEST_EMAIL, TEST_PASSWORD)}
+                >
+                  <FlaskConical size={14} className="mr-2" />
+                  Test (empty)
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              className="w-full"
+              size="lg"
+              onClick={() => quickLogin('alex@mnemo.app', 'demo1234')}
+            >
+              Use demo account
+            </Button>
+          )}
         </div>
 
         <p className="text-center text-sm text-muted-foreground mt-5">
