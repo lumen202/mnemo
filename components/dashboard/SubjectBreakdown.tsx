@@ -1,16 +1,34 @@
 'use client'
 import { GlassCard } from '@/components/common/GlassCard'
 import { CategoryPieChart } from '@/components/charts/CategoryPieChart'
-import { MOCK_SUBJECT_STUDY } from '@/data/mockData'
+import { useStudyMaterialStore, useStudySessionStore, useSubjectStore } from '@/store'
+import { computeStudyAnalytics } from '@/utils/analytics'
+import { SUBJECT_META } from '@/data/mockData'
 
 export function SubjectBreakdown() {
-  const data = MOCK_SUBJECT_STUDY
+  const { materials } = useStudyMaterialStore()
+  const { sessions } = useStudySessionStore()
+  const { subjects } = useSubjectStore()
+
+  const analytics = computeStudyAnalytics(materials, sessions, subjects)
+  const data =
+    analytics.subjectBreakdown.length > 0
+      ? analytics.subjectBreakdown
+      : subjects.map((s) => ({
+          subjectId: s.slug as import('@/types').SubjectId,
+          subjectName: SUBJECT_META[s.slug]?.label ?? s.name,
+          hoursStudied: s.completedHours,
+          percentage: 0,
+          color: SUBJECT_META[s.slug]?.color ?? s.color ?? '#64748b',
+        }))
+
+  const month = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   return (
     <GlassCard className="p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 gap-2 sm:gap-0">
         <h3 className="text-sm font-semibold text-foreground">Subject Breakdown</h3>
-        <span className="text-xs text-muted-foreground">May 2026</span>
+        <span className="text-xs text-muted-foreground">{month}</span>
       </div>
 
       <div className="flex justify-center mb-4">

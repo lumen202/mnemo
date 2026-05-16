@@ -1,4 +1,4 @@
-import type { StudyMaterial, StudySession, Subject, StudyAnalytics, SubjectStudy } from '@/types'
+import type { StudyMaterial, StudySession, Subject, StudyAnalytics, SubjectStudy, WeeklyStudyTrend, Flashcard, LearningHealthScore } from '@/types'
 import { SUBJECT_META } from '@/data/mockData'
 
 export function computeStudyAnalytics(
@@ -48,6 +48,118 @@ export function computeStudyAnalytics(
     subjectBreakdown,
     weeklyTrend: [],
   }
+}
+
+export function computeWeeklyTrend(
+  sessions: StudySession[],
+  flashcards: Flashcard[],
+): WeeklyStudyTrend[] {
+  const today = new Date()
+  today.setHours(23, 59, 59, 999)
+
+  const weeks = Array.from({ length: 6 }, (_, i) => {
+    const end = new Date(today)
+    end.setDate(today.getDate() - i * 7)
+    const start = new Date(end)
+    start.setDate(end.getDate() - 6)
+    start.setHours(0, 0, 0, 0)
+    const month = end.toLocaleDateString('en-US', { month: 'short' })
+    const weekOfMonth = Math.ceil(end.getDate() / 7)
+    return { label: `${month} W${weekOfMonth}`, start, end }
+  }).reverse()
+
+  return weeks.map(({ label, start, end }) => {
+    const weekSessions = sessions.filter((s) => {
+      const d = new Date(s.date)
+      return d >= start && d <= end
+    })
+    const hoursStudied =
+      Math.round((weekSessions.reduce((sum, s) => sum + s.durationMinutes / 60, 0)) * 10) / 10
+    const reviewedMaterials = new Set<string>()
+    weekSessions.forEach((s) => s.materialsReviewed?.forEach((m) => reviewedMaterials.add(m)))
+    const flashcardsReviewed = flashcards.filter((f) => {
+      if (!f.lastReviewed) return false
+      const d = new Date(f.lastReviewed)
+      return d >= start && d <= end
+    }).length
+    return { week: label, hoursStudied, flashcardsReviewed, materialsCompleted: reviewedMaterials.size }
+  })
+}
+
+export function computeLearningScore(
+  analytics: StudyAnalytics,
+  flashcards: Flashcard[],
+  subjects: Subject[],
+): LearningHealthScore {
+  const consistencyScore = Math.min(Math.round((analytics.studyStreak / 30) * 100), 100)
+
+  const reviewedCards = flashcards.filter((f) => f.timesReviewed > 0)
+  let retentionScore = 50
+  if (reviewedCards.length > 0) {
+    const weighted = reviewedCards.reduce((sum, f) => {
+      const w = f.difficulty === 'easy' ? 1 : f.difficulty === 'medium' ? 0.7 : 0.4
+      return sum + w
+    }, 0)
+    retentionScore = Math.round((weighted / reviewedCards.length) * 100)
+  }
+
+  const hours = subjects.map((s) => s.completedHours)
+  let balanceScore = 100
+  if (subjects.length > 1) {
+    const avg = hours.reduce((a, b) => a + b, 0) / subjects.length
+    const variance = hours.reduce((sum, h) => sum + Math.pow(h - avg, 2), 0) / subjects.length
+    const cv = avg > 0 ? Math.sqrt(variance) / avg : 0
+    balanceScore = Math.max(0, Math.round(100 - cv * 50))
+  }
+
+  const coverageScore =
+    analytics.totalMaterials > 0
+      ? Math.round((analytics.completedMaterials / analytics.totalMaterials) * 100)
+      : 0
+
+  const overall = Math.round(
+    consistencyScore * 0.3 + retentionScore * 0.3 + balanceScore * 0.2 + coverageScore * 0.2
+  )
+
+  const dimensions = [
+    {
+      label: 'Study Consistency',
+      score: consistencyScore,
+      description:
+        analytics.studyStreak > 0 ? `${analytics.studyStreak}-day streak` : 'No recent sessions',
+    },
+    {
+      label: 'Retention Rate',
+      score: retentionScore,
+      description:
+        reviewedCards.length > 0
+          ? `${reviewedCards.length} flashcard${reviewedCards.length !== 1 ? 's' : ''} reviewed`
+          : 'No flashcards reviewed yet',
+    },
+    {
+      label: 'Subject Balance',
+      score: balanceScore,
+      description: `${analytics.activeSubjects} active subject${analytics.activeSubjects !== 1 ? 's' : ''}`,
+    },
+    {
+      label: 'Material Coverage',
+      score: coverageScore,
+      description: `${analytics.completedMaterials} of ${analytics.totalMaterials} materials reviewed`,
+    },
+  ]
+
+  const strongest = [...dimensions].sort((a, b) => b.score - a.score)[0]
+  const weakest = [...dimensions].sort((a, b) => a.score - b.score)[0]
+  const trend: 'up' | 'down' | 'stable' =
+    overall >= 70 ? 'up' : overall >= 45 ? 'stable' : 'down'
+  const explanation =
+    overall >= 70
+      ? `Your learning health is strong. ${strongest.label} is your best area — keep it up. Focus on ${weakest.label} to improve further.`
+      : overall >= 45
+      ? `You're making progress. Improving ${weakest.label} will boost your overall score the most.`
+      : `Getting started! Building ${strongest.label} consistently will put you on track.`
+
+  return { overall, dimensions, trend, explanation, tips: [] }
 }
 
 export function computeSubjectProgress(target: number, completed: number): number {

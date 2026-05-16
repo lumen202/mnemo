@@ -1,8 +1,8 @@
-import { StudyStatsCard } from '@/components/dashboard/BalanceCard'
-import { StudyProgressChart } from '@/components/dashboard/SpendingTrendChart'
-import { SubjectBreakdown } from '@/components/dashboard/CategoryBreakdown'
-import { RecentMaterials } from '@/components/dashboard/RecentTransactions'
-import { LearningScore } from '@/components/dashboard/FinancialHealthScore'
+import { StudyStatsCard } from '@/components/dashboard/StudyStatsCard'
+import { StudyProgressChart } from '@/components/dashboard/StudyProgressChart'
+import { SubjectBreakdown } from '@/components/dashboard/SubjectBreakdown'
+import { RecentMaterials } from '@/components/dashboard/RecentMaterials'
+import { LearningScore } from '@/components/dashboard/LearningScore'
 import { LearningInsightsPanel } from '@/components/dashboard/AIInsightsPanel'
 
 export default function DashboardPage() {

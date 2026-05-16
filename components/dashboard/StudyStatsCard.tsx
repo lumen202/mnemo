@@ -48,7 +48,7 @@ export function StudyStatsCard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">
-            May 2026 · Study Overview
+            {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} · Study Overview
           </p>
           <h2 className="text-3xl font-bold gradient-text-study tabular-nums">
             {analytics.totalStudyHours}h studied

@@ -1,7 +1,8 @@
 'use client'
 import { TrendingUp, TrendingDown, Minus, Sparkles } from 'lucide-react'
 import { GlassCard } from '@/components/common/GlassCard'
-import { MOCK_LEARNING_SCORE } from '@/data/mockData'
+import { useStudyMaterialStore, useStudySessionStore, useSubjectStore, useFlashcardStore } from '@/store'
+import { computeStudyAnalytics, computeLearningScore } from '@/utils/analytics'
 import { cn } from '@/lib/utils'
 
 function ScoreRing({ score }: { score: number }) {
@@ -37,7 +38,13 @@ function ScoreRing({ score }: { score: number }) {
 }
 
 export function LearningScore() {
-  const { overall, dimensions, trend, explanation } = MOCK_LEARNING_SCORE
+  const { materials } = useStudyMaterialStore()
+  const { sessions } = useStudySessionStore()
+  const { subjects } = useSubjectStore()
+  const { flashcards } = useFlashcardStore()
+
+  const analytics = computeStudyAnalytics(materials, sessions, subjects)
+  const { overall, dimensions, trend, explanation } = computeLearningScore(analytics, flashcards, subjects)
 
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus
   const trendColor = trend === 'up' ? 'text-emerald-400' : trend === 'down' ? 'text-rose-400' : 'text-muted-foreground'

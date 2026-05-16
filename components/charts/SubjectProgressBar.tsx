@@ -1,23 +1,23 @@
 import { cn } from '@/lib/utils'
 import { computeSubjectProgress, getSubjectStatus } from '@/utils/analytics'
 
-interface BudgetProgressBarProps {
-  budgeted: number
-  spent: number
+interface SubjectProgressBarProps {
+  target: number
+  completed: number
   color?: string
   className?: string
   showLabel?: boolean
 }
 
-export function BudgetProgressBar({
-  budgeted,
-  spent,
+export function SubjectProgressBar({
+  target,
+  completed,
   color,
   className,
   showLabel = false,
-}: BudgetProgressBarProps) {
-  const pct = computeSubjectProgress(budgeted, spent)
-  const rawStatus = getSubjectStatus(budgeted, spent)
+}: SubjectProgressBarProps) {
+  const pct = computeSubjectProgress(target, completed)
+  const rawStatus = getSubjectStatus(target, completed)
   const status = rawStatus === 'ahead' ? 'safe' : rawStatus === 'on-track' ? 'safe' : 'warning'
 
   const trackColor = {
@@ -30,8 +30,8 @@ export function BudgetProgressBar({
     <div className={cn('space-y-1', className)}>
       {showLabel && (
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{Math.round(pct)}% used</span>
-          <span>{Math.round(100 - pct)}% left</span>
+          <span>{Math.round(pct)}% complete</span>
+          <span>{Math.round(100 - pct)}% remaining</span>
         </div>
       )}
       <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
