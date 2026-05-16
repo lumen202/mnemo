@@ -49,7 +49,7 @@ export function Sidebar() {
   const confirmSignOut = async () => {
     await signOut()
     setSignOutDialogOpen(false)
-    router.push('/')
+    router.push('/auth/login')
   }
 
   const handleNavClick = () => {

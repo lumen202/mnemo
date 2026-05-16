@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { ThemeProvider, themeScript } from '@/components/ThemeProvider'
+import NextTopLoader from 'nextjs-toploader'
 
 export const metadata: Metadata = {
   title: 'Mnemo — AI Study Companion',
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="font-sans min-h-screen bg-background antialiased">
+        <NextTopLoader color="#6366f1" shadow="0 0 10px #6366f1,0 0 5px #6366f1" height={2} showSpinner={false} />
         <ThemeProvider>
           {children}
         </ThemeProvider>

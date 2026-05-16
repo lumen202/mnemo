@@ -39,7 +39,7 @@ interface AuthState {
   isLoading: boolean
   isAuthenticated: boolean
   isSigningOut: boolean
-  signIn: (email: string, password: string) => Promise<void>
+  signIn: (email: string, password: string, rememberMe: boolean) => Promise<void>
   signUp: (email: string, password: string, name: string) => Promise<void>
   signOut: () => Promise<void>
   hydrate: () => Promise<void>
@@ -51,27 +51,33 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   isSigningOut: false,
 
-  signIn: async (email, password) => {
+  signIn: async (email, password, rememberMe) => {
     set({ isLoading: true })
-    if (isSupabaseConfigured()) {
-      const data = await signInWithEmail(email, password)
-      const user = data.user
-      document.cookie = `mnemo_session=${data.session?.access_token ?? 'supabase'}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
-      set({
-        isLoading: false,
-        isAuthenticated: true,
-        user: user
-          ? { id: user.id, email: user.email ?? email, name: user.user_metadata?.name ?? email.split('@')[0], createdAt: user.created_at }
-          : null,
-      })
-    } else {
-      await new Promise((r) => setTimeout(r, 800))
-      document.cookie = `mnemo_session=demo; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
-      set({
-        isLoading: false,
-        isAuthenticated: true,
-        user: { id: 'user_demo', email, name: email.split('@')[0], createdAt: new Date().toISOString() },
-      })
+    try {
+      const maxAge = rememberMe ? `; max-age=${60 * 60 * 24 * 7}` : ''
+      if (isSupabaseConfigured()) {
+        const data = await signInWithEmail(email, password)
+        const user = data.user
+        document.cookie = `mnemo_session=${data.session?.access_token ?? 'supabase'}; path=/; SameSite=Lax${maxAge}`
+        set({
+          isLoading: false,
+          isAuthenticated: true,
+          user: user
+            ? { id: user.id, email: user.email ?? email, name: user.user_metadata?.name ?? email.split('@')[0], createdAt: user.created_at }
+            : null,
+        })
+      } else {
+        await new Promise((r) => setTimeout(r, 800))
+        document.cookie = `mnemo_session=demo; path=/; SameSite=Lax${maxAge}`
+        set({
+          isLoading: false,
+          isAuthenticated: true,
+          user: { id: 'user_demo', email, name: email.split('@')[0], createdAt: new Date().toISOString() },
+        })
+      }
+    } catch (err) {
+      set({ isLoading: false })
+      throw err
     }
   },
 
@@ -104,7 +110,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (isSupabaseConfigured()) {
       await supabaseSignOut()
     }
-    document.cookie = 'mnemo_session=; path=/; max-age=0'
+    document.cookie = 'mnemo_session=; path=/; max-age=0; SameSite=Lax'
     set({ user: null, isAuthenticated: false, isLoading: false, isSigningOut: false })
   },
 
