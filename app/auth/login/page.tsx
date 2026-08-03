@@ -91,7 +91,7 @@ export default function LoginPage() {
           <p className="text-xs text-muted-foreground">
             {isSupabaseConfigured() ? (
               <>
-                <span className="text-indigo-300 font-medium">Supabase connected:</span> Use <strong>demo@mnemo.test</strong> (seeded data) or <strong>test@mnemo.test</strong> (empty) for testing.
+                <span className="text-indigo-300 font-medium">Portfolio demo:</span> Sign in with <strong>demo@mnemo.test</strong> to explore a populated account, or <strong>test@mnemo.test</strong> to start from zero.
               </>
             ) : (
               <>
@@ -198,7 +198,7 @@ export default function LoginPage() {
 
           {isSupabaseConfigured() ? (
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground text-center">Quick Login (Dev Only)</p>
+              <p className="text-xs text-muted-foreground text-center">Try it instantly — no signup required</p>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   variant="outline"

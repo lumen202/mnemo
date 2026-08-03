@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { StudyMaterial, Subject, ChatMessage, ChatSession, User, AIInsight, Flashcard, Quiz, StudySession, StudyGoal } from '@/types'
+import type { StudyMaterial, Subject, ChatMessage, ChatSession, User, AIInsight, Flashcard, Quiz, StudySession, StudyGoal, ToastMessage } from '@/types'
 import {
   MOCK_SUBJECTS,
   MOCK_INSIGHTS,
@@ -527,11 +527,14 @@ interface UIState {
   isMobile: boolean
   addMaterialOpen: boolean
   theme: Theme
+  toasts: ToastMessage[]
   toggleSidebar: () => void
   setSidebarOpen: (v: boolean) => void
   setIsMobile: (v: boolean) => void
   setAddMaterialOpen: (v: boolean) => void
   setTheme: (t: Theme) => void
+  addToast: (toast: Omit<ToastMessage, 'id'>) => void
+  removeToast: (id: string) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -539,9 +542,18 @@ export const useUIStore = create<UIState>((set) => ({
   isMobile: false,
   addMaterialOpen: false,
   theme: 'dark',
+  toasts: [],
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
   setIsMobile: (isMobile) => set({ isMobile }),
   setAddMaterialOpen: (addMaterialOpen) => set({ addMaterialOpen }),
   setTheme: (theme) => set({ theme }),
+  addToast: (toast) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    set((s) => ({ toasts: [...s.toasts, { ...toast, id }] }))
+    setTimeout(() => {
+      set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }))
+    }, 4000)
+  },
+  removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 }))

@@ -43,27 +43,27 @@ async function main() {
   })
 
   // 1. Create or fetch users
-  const [demoResult, testResult] = await Promise.all([
-    admin.auth.admin.createUser({
-      email: DEMO_EMAIL,
-      password: DEMO_PASSWORD,
+  async function getOrCreateUser(email: string, password: string, name: string): Promise<string> {
+    const created = await admin.auth.admin.createUser({
+      email,
+      password,
       email_confirm: true,
-      user_metadata: { name: 'Demo User' },
-    }),
-    admin.auth.admin.createUser({
-      email: TEST_EMAIL,
-      password: TEST_PASSWORD,
-      email_confirm: true,
-      user_metadata: { name: 'Test User' },
-    }),
-  ])
+      user_metadata: { name },
+    })
+    if (created.data?.user?.id) return created.data.user.id
 
-  const demoUserId = demoResult.data?.user?.id
-  const testUserId = testResult.data?.user?.id
-
-  if (!demoUserId || !testUserId) {
-    throw new Error('Failed to create users')
+    // User already exists — look it up instead
+    const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
+    if (error) throw error
+    const existing = data.users.find((u) => u.email === email)
+    if (!existing) throw new Error(`Could not create or find user: ${email}`)
+    return existing.id
   }
+
+  const [demoUserId, testUserId] = await Promise.all([
+    getOrCreateUser(DEMO_EMAIL, DEMO_PASSWORD, 'Demo User'),
+    getOrCreateUser(TEST_EMAIL, TEST_PASSWORD, 'Test User'),
+  ])
 
   console.log(`✓ Demo user  → ${DEMO_EMAIL}  (${demoUserId})`)
   console.log(`✓ Test user  → ${TEST_EMAIL}   (${testUserId})`)

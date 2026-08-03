@@ -50,6 +50,43 @@ export function computeStudyAnalytics(
   }
 }
 
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+export interface HeatmapDay {
+  day: string
+  weeksAgo: number
+  hours: number
+}
+
+export function computeActivityHeatmap(sessions: StudySession[], weeks = 6): HeatmapDay[][] {
+  const hoursByDate = new Map<string, number>()
+  sessions.forEach((s) => {
+    hoursByDate.set(s.date, (hoursByDate.get(s.date) ?? 0) + s.durationMinutes / 60)
+  })
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const totalDays = weeks * 7
+  const days: HeatmapDay[] = []
+  for (let i = totalDays - 1; i >= 0; i--) {
+    const d = new Date(today)
+    d.setDate(d.getDate() - i)
+    const dateStr = d.toISOString().split('T')[0]
+    days.push({
+      day: DAY_LABELS[d.getDay()],
+      weeksAgo: Math.floor(i / 7),
+      hours: +(hoursByDate.get(dateStr) ?? 0).toFixed(1),
+    })
+  }
+
+  const result: HeatmapDay[][] = []
+  for (let w = 0; w < weeks; w++) {
+    result.push(days.slice(w * 7, w * 7 + 7))
+  }
+  return result
+}
+
 export function computeWeeklyTrend(
   sessions: StudySession[],
   flashcards: Flashcard[],

@@ -5,7 +5,7 @@ import { GlassCard } from '@/components/common/GlassCard'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useQuizStore, useStudyMaterialStore } from '@/store'
+import { useQuizStore, useStudyMaterialStore, useUIStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 import type { Quiz, SubjectId, StudyMaterial } from '@/types'
@@ -517,6 +517,7 @@ type ViewMode = 'all' | 'by-subject' | 'by-material'
 export default function QuizzesPage() {
   const { quizzes, activeQuiz, setActiveQuiz, updateQuizScore } = useQuizStore()
   const { materials } = useStudyMaterialStore()
+  const { addToast } = useUIStore()
   const [completedScore, setCompletedScore] = useState<number | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('all')
 
@@ -524,6 +525,11 @@ export default function QuizzesPage() {
     if (activeQuiz) {
       updateQuizScore(activeQuiz.id, score)
       setCompletedScore(score)
+      addToast({
+        title: score >= 75 ? 'Nice work!' : 'Quiz completed',
+        description: `You scored ${score}% on "${activeQuiz.title}".`,
+        variant: score >= 60 ? 'success' : 'warning',
+      })
     }
   }
 

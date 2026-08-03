@@ -44,7 +44,7 @@ const TYPES: { value: MaterialType; label: string }[] = [
 ]
 
 export function AddMaterialModal() {
-  const { addMaterialOpen, setAddMaterialOpen } = useUIStore()
+  const { addMaterialOpen, setAddMaterialOpen, addToast } = useUIStore()
   const { addMaterial } = useStudyMaterialStore()
 
   const [title, setTitle] = useState('')
@@ -129,8 +129,11 @@ export function AddMaterialModal() {
         source: source ?? undefined,
       })
       close()
+      addToast({ title: 'Material added', description: `"${title.trim()}" is now in your library.`, variant: 'success' })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save. Please try again.')
+      const message = err instanceof Error ? err.message : 'Failed to save. Please try again.'
+      setError(message)
+      addToast({ title: 'Upload failed', description: message, variant: 'error' })
     } finally {
       setIsSaving(false)
     }

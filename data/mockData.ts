@@ -12,6 +12,20 @@ import type {
   StudyGoal,
 } from '@/types'
 
+// ─── Date helpers ────────────────────────────────────────────────────────────
+// Mock session/goal dates are anchored to "today" (not a fixed calendar date) so
+// streaks, heatmaps, and trends keep looking realistic no matter when the demo is run.
+
+function daysAgo(n: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - n)
+  return d.toISOString().split('T')[0]
+}
+
+function daysFromNow(n: number): string {
+  return daysAgo(-n)
+}
+
 // ─── Subject Meta ──────────────────────────────────────────────────────────────
 
 export const SUBJECT_META: Record<
@@ -656,14 +670,14 @@ export const MOCK_QUIZZES: Quiz[] = [
 // ─── Mock Study Sessions ───────────────────────────────────────────────────────
 
 export const MOCK_SESSIONS: StudySession[] = [
-  { id: 'ses_001', userId: 'user_demo', subjectId: 'machine-learning',  date: '2026-05-16', durationMinutes: 90,  notes: 'Finished Transformer paper annotation' },
-  { id: 'ses_002', userId: 'user_demo', subjectId: 'computer-science',  date: '2026-05-16', durationMinutes: 60,  notes: 'Dynamic programming practice problems' },
-  { id: 'ses_003', userId: 'user_demo', subjectId: 'mathematics',       date: '2026-05-15', durationMinutes: 75,  notes: 'Series convergence tests drill' },
-  { id: 'ses_004', userId: 'user_demo', subjectId: 'machine-learning',  date: '2026-05-15', durationMinutes: 120, notes: 'Neural networks from scratch — completed' },
-  { id: 'ses_005', userId: 'user_demo', subjectId: 'literature',        date: '2026-05-14', durationMinutes: 45,  notes: 'Hamlet Act 4-5 close reading' },
-  { id: 'ses_006', userId: 'user_demo', subjectId: 'computer-science',  date: '2026-05-14', durationMinutes: 90,  notes: 'AVL tree rotations + quiz prep' },
-  { id: 'ses_007', userId: 'user_demo', subjectId: 'mathematics',       date: '2026-05-13', durationMinutes: 60,  notes: 'Integration by parts practice' },
-  { id: 'ses_008', userId: 'user_demo', subjectId: 'physics',           date: '2026-05-12', durationMinutes: 45,  notes: 'Wave function lecture notes review' },
+  { id: 'ses_001', userId: 'user_demo', subjectId: 'machine-learning',  date: daysAgo(0), durationMinutes: 90,  notes: 'Finished Transformer paper annotation' },
+  { id: 'ses_002', userId: 'user_demo', subjectId: 'computer-science',  date: daysAgo(0), durationMinutes: 60,  notes: 'Dynamic programming practice problems' },
+  { id: 'ses_003', userId: 'user_demo', subjectId: 'mathematics',       date: daysAgo(1), durationMinutes: 75,  notes: 'Series convergence tests drill' },
+  { id: 'ses_004', userId: 'user_demo', subjectId: 'machine-learning',  date: daysAgo(1), durationMinutes: 120, notes: 'Neural networks from scratch — completed' },
+  { id: 'ses_005', userId: 'user_demo', subjectId: 'literature',        date: daysAgo(2), durationMinutes: 45,  notes: 'Hamlet Act 4-5 close reading' },
+  { id: 'ses_006', userId: 'user_demo', subjectId: 'computer-science',  date: daysAgo(2), durationMinutes: 90,  notes: 'AVL tree rotations + quiz prep' },
+  { id: 'ses_007', userId: 'user_demo', subjectId: 'mathematics',       date: daysAgo(3), durationMinutes: 60,  notes: 'Integration by parts practice' },
+  { id: 'ses_008', userId: 'user_demo', subjectId: 'physics',           date: daysAgo(4), durationMinutes: 45,  notes: 'Wave function lecture notes review' },
 ]
 
 // ─── Mock Study Goals ──────────────────────────────────────────────────────────
@@ -674,7 +688,7 @@ export const MOCK_GOALS: StudyGoal[] = [
     userId: 'user_demo',
     title: 'Complete Machine Learning Module',
     description: 'Finish all 15 ML materials and achieve 90%+ quiz average',
-    targetDate: '2026-05-20',
+    targetDate: daysFromNow(4),
     completed: false,
     subjectId: 'machine-learning',
     progress: 93,
@@ -684,7 +698,7 @@ export const MOCK_GOALS: StudyGoal[] = [
     userId: 'user_demo',
     title: 'Master Data Structures',
     description: 'Review all materials and score 95+ on final quiz',
-    targetDate: '2026-05-18',
+    targetDate: daysFromNow(2),
     completed: false,
     subjectId: 'computer-science',
     progress: 84,
@@ -694,7 +708,7 @@ export const MOCK_GOALS: StudyGoal[] = [
     userId: 'user_demo',
     title: 'Study 7 days straight',
     description: 'Maintain daily study habit for a full week',
-    targetDate: '2026-05-16',
+    targetDate: daysAgo(0),
     completed: true,
     progress: 100,
   },
@@ -703,7 +717,7 @@ export const MOCK_GOALS: StudyGoal[] = [
     userId: 'user_demo',
     title: 'Upload & Summarize Physics Notes',
     description: 'Get all QM lecture notes into the system with AI summaries',
-    targetDate: '2026-05-22',
+    targetDate: daysFromNow(6),
     completed: false,
     subjectId: 'physics',
     progress: 40,
@@ -713,7 +727,7 @@ export const MOCK_GOALS: StudyGoal[] = [
     userId: 'user_demo',
     title: 'Complete Calculus II Review',
     description: 'Practice all integration techniques and series tests',
-    targetDate: '2026-05-30',
+    targetDate: daysFromNow(14),
     completed: false,
     subjectId: 'mathematics',
     progress: 58,

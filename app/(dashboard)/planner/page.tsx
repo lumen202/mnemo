@@ -2,23 +2,23 @@
 import { Flame, CalendarDays, CheckCircle, Circle, Target, Clock, TrendingUp, Sparkles } from 'lucide-react'
 import { GlassCard } from '@/components/common/GlassCard'
 import { Button } from '@/components/ui/button'
-import { useStudySessionStore, useSubjectStore } from '@/store'
+import { useStudySessionStore, useSubjectStore, useUIStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
 import { cn } from '@/lib/utils'
-
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const HEATMAP_DATA = [7, 6, 5, 4, 3, 2, 1, 0].map((weeksAgo) =>
-  DAYS.map((day, dayIndex) => {
-    const baseHours = Math.random() * 3
-    const recentBoost = weeksAgo < 2 ? 1.2 : 1
-    const hours = +(baseHours * recentBoost).toFixed(1)
-    return { day, weeksAgo, hours }
-  })
-)
+import { computeActivityHeatmap } from '@/utils/analytics'
 
 export default function PlannerPage() {
   const { sessions, goals, updateGoal } = useStudySessionStore()
   const { subjects } = useSubjectStore()
+  const { addToast } = useUIStore()
+  const heatmap = computeActivityHeatmap(sessions)
+
+  const toggleGoal = (goal: (typeof goals)[number]) => {
+    updateGoal(goal.id, { completed: !goal.completed })
+    if (!goal.completed) {
+      addToast({ title: 'Goal completed', description: `"${goal.title}" — nice work.`, variant: 'success' })
+    }
+  }
 
   const totalHoursThisMonth = sessions.reduce((s, sess) => s + sess.durationMinutes / 60, 0)
   const todaySessions = sessions.filter((s) => s.date === new Date().toISOString().split('T')[0])
@@ -90,7 +90,7 @@ export default function PlannerPage() {
                   >
                     <div className="flex items-start gap-3">
                       <button
-                        onClick={() => updateGoal(goal.id, { completed: !goal.completed })}
+                        onClick={() => toggleGoal(goal)}
                         className="mt-0.5 shrink-0"
                       >
                         {goal.completed ? (
@@ -176,7 +176,7 @@ export default function PlannerPage() {
           <GlassCard className="p-5">
             <h3 className="text-sm font-semibold text-foreground mb-4">Activity Heatmap</h3>
             <div className="flex gap-1">
-              {HEATMAP_DATA.slice(0, 6).map((week, wi) => (
+              {heatmap.map((week, wi) => (
                 <div key={wi} className="flex flex-col gap-1 flex-1">
                   {week.map(({ hours }, di) => (
                     <div
