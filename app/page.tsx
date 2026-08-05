@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import {
-  Brain, Sparkles, Shield, ArrowRight, CheckCircle2,
-  BookOpen, FlipHorizontal, CircleHelp, CalendarDays,
+  Brain, Sparkles, ArrowRight, CheckCircle2,
+  FlipHorizontal, CircleHelp, CalendarDays,
   GraduationCap, Zap, FileText, MessageSquare, Menu, X,
+  Boxes, Sigma, Network, Github,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -61,32 +62,53 @@ const FEATURES = [
 ]
 
 const STATS = [
-  { value: '10×', label: 'faster document review' },
-  { value: '< 30s', label: 'to generate flashcards' },
-  { value: '6+', label: 'AI-powered study tools' },
-  { value: '100%', label: 'private & encrypted' },
+  { value: '6', label: 'study tools, one workspace' },
+  { value: '4', label: 'AI agents, one route each' },
+  { value: '3-stage', label: 'automatic model failover' },
+  { value: 'MIT', label: 'open source on GitHub' },
 ]
 
-const TESTIMONIALS = [
+const BUILD_NOTES = [
   {
-    quote: 'Mnemo summarized my 80-page lecture notes in 30 seconds. I used to spend 2 hours on that. It\'s genuinely changed how I prepare for exams.',
-    name: 'Sophia L.',
-    role: 'Medical Student',
-    initials: 'SL',
+    icon: Boxes,
+    title: 'Mock-first, zero config',
+    description: 'Clone the repo and it runs with no environment variables. Every data service checks for real credentials before touching the network and falls back to in-memory data. Add Supabase and OpenRouter keys and the same UI switches to a live backend — no code branches, no separate demo mode.',
+    color: 'text-indigo-400',
+    bg: 'bg-indigo-500/15',
+    border: 'border-indigo-500/25',
   },
   {
-    quote: 'The AI-generated flashcards are incredibly good. They ask exactly the right questions. My quiz scores went from C+ to A- in two weeks.',
-    name: 'Marcus W.',
-    role: 'CS Undergraduate',
-    initials: 'MW',
+    icon: Sigma,
+    title: 'AI explains, math computes',
+    description: 'Models never calculate a statistic. Study hours, streaks, scores, and progress are all derived by plain TypeScript in one analytics module. AI is used only for what a language model is actually good at: summarizing, explaining, and writing questions.',
+    color: 'text-cyan-400',
+    bg: 'bg-cyan-500/15',
+    border: 'border-cyan-500/25',
   },
   {
-    quote: 'I upload my research papers and just ask questions. It\'s like having an expert reader in the room who can explain any passage instantly.',
-    name: 'Priya N.',
-    role: 'PhD Researcher',
-    initials: 'PN',
+    icon: Network,
+    title: 'One route per AI capability',
+    description: 'Tutor chat, summarization, flashcard generation, and quiz generation are each their own agent module and API route — no monolithic dispatcher. Requests fail over automatically from the primary model to a free model router to Groq, so one provider outage does not take the app down.',
+    color: 'text-violet-400',
+    bg: 'bg-violet-500/15',
+    border: 'border-violet-500/25',
   },
 ]
+
+const TECH_STACK = [
+  'Next.js 15 · App Router',
+  'React 19',
+  'TypeScript · strict',
+  'Zustand',
+  'Tailwind CSS',
+  'Supabase · Postgres + Auth',
+  'OpenRouter + Groq',
+  'Recharts',
+  'Vercel',
+]
+
+const GITHUB_URL = 'https://github.com/lumen202/mnemo'
+const CONTACT_EMAIL = 'remultasimpatiko@gmail.com'
 
 const HOW_IT_WORKS = [
   { step: '01', title: 'Upload your materials', desc: 'Drag and drop PDFs, paste lecture notes, or link videos. Mnemo ingests anything and starts working immediately.' },
@@ -95,10 +117,10 @@ const HOW_IT_WORKS = [
 ]
 
 const CHECKLIST = [
-  'No credit card required',
-  'AI insights in under 60 seconds',
+  'Free and open source (MIT)',
+  'One-click demo account',
   'Works with any subject',
-  'Free plan — always',
+  'Runs locally with zero config',
 ]
 
 function LandingNav() {
@@ -116,7 +138,16 @@ function LandingNav() {
         <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground flex-1 px-8">
           <Link href="#features" className="hover:text-foreground transition-colors">Features</Link>
           <Link href="#how-it-works" className="hover:text-foreground transition-colors">How it works</Link>
-          <Link href="#testimonials" className="hover:text-foreground transition-colors">Stories</Link>
+          <Link href="#how-its-built" className="hover:text-foreground transition-colors">How it&apos;s built</Link>
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+          >
+            <Github size={14} />
+            Source
+          </a>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <ThemeToggle showLabel={false} />
@@ -156,12 +187,22 @@ function LandingNav() {
               How it works
             </Link>
             <Link
-              href="#testimonials"
+              href="#how-its-built"
               className="px-4 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setMenuOpen(false)}
             >
-              Stories
+              How it&apos;s built
             </Link>
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setMenuOpen(false)}
+            >
+              <Github size={16} />
+              Source
+            </a>
             <div className="border-t border-white/[0.06] mt-2 pt-4 flex flex-col gap-2">
               <Button variant="outline" asChild className="w-full min-h-[44px]">
                 <Link href="/auth/login">Sign In</Link>
@@ -217,7 +258,7 @@ export default function LandingPage() {
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild className="w-full sm:w-auto min-h-[44px]">
-                <Link href="/dashboard">View demo</Link>
+                <Link href="/auth/login?demo=1">View demo</Link>
               </Button>
             </div>
 
@@ -340,30 +381,57 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section id="testimonials" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-12 bg-white/[0.01] border-t border-white/[0.05]">
+      {/* How it's built */}
+      <section id="how-its-built" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-12 bg-white/[0.01] border-t border-white/[0.05]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12 sm:mb-16">
-            <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-3">Stories</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">Students who study smarter</h2>
+            <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-3">How it&apos;s built</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+              Three decisions that shaped{' '}
+              <span className="gradient-text-study block sm:inline">the codebase.</span>
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto px-4 sm:px-0">
+              Mnemo is a solo-built portfolio project. The source is public — here is what is worth reading.
+            </p>
           </div>
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="glass border border-white/[0.07] rounded-2xl p-6 glass-hover">
-                <p className="text-sm text-foreground/80 leading-relaxed mb-5 italic">
-                  &ldquo;{t.quote}&rdquo;
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500/40 to-cyan-500/40 flex items-center justify-center text-sm font-bold text-foreground flex-shrink-0">
-                    {t.initials}
+
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5 mb-12">
+            {BUILD_NOTES.map((note) => {
+              const Icon = note.icon
+              return (
+                <div
+                  key={note.title}
+                  className={`glass border rounded-2xl p-6 card-shine glass-hover ${note.border}`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${note.bg}`}>
+                    <Icon className={`w-5 h-5 ${note.color}`} />
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{t.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{t.role}</p>
-                  </div>
+                  <h3 className="text-base font-semibold text-foreground mb-2">{note.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{note.description}</p>
                 </div>
-              </div>
+              )
+            })}
+          </div>
+
+          {/* Tech stack */}
+          <div className="flex flex-wrap justify-center gap-2 mb-10">
+            {TECH_STACK.map((tech) => (
+              <span
+                key={tech}
+                className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground"
+              >
+                {tech}
+              </span>
             ))}
+          </div>
+
+          <div className="text-center">
+            <Button variant="outline" size="lg" asChild className="min-h-[44px]">
+              <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
+                <Github size={18} />
+                Read the source on GitHub
+              </a>
+            </Button>
           </div>
         </div>
       </section>
@@ -378,7 +446,7 @@ export default function LandingPage() {
             Ready to transform<br />how you study?
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground mb-8 px-4 sm:px-0">
-            Join students who use AI to learn faster, retain more, and stress less — starting with their very first upload.
+            Create an account and upload your first material, or sign in to the demo account to explore a fully populated workspace.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4 sm:px-0">
             <Button size="lg" asChild className="w-full sm:w-auto min-h-[44px]">
@@ -388,7 +456,7 @@ export default function LandingPage() {
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild className="w-full sm:w-auto min-h-[44px]">
-              <Link href="/dashboard">Explore demo</Link>
+              <Link href="/auth/login?demo=1">Explore demo</Link>
             </Button>
           </div>
         </div>
@@ -405,9 +473,20 @@ export default function LandingPage() {
           </div>
           <p className="text-xs text-muted-foreground text-center sm:text-left">© 2026 Mnemo. Portfolio prototype — AI-powered learning platform.</p>
           <div className="flex gap-4 sm:gap-6 text-xs text-muted-foreground">
-            <Link href="#" className="hover:text-foreground transition-colors">Privacy</Link>
-            <Link href="#" className="hover:text-foreground transition-colors">Terms</Link>
-            <Link href="#" className="hover:text-foreground transition-colors">Contact</Link>
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground transition-colors"
+            >
+              GitHub
+            </a>
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="hover:text-foreground transition-colors"
+            >
+              Contact
+            </a>
           </div>
         </div>
       </footer>

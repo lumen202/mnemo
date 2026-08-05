@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { GraduationCap, Eye, EyeOff, ArrowRight, Sparkles, FlaskConical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -13,12 +13,23 @@ const DEMO_EMAIL = 'demo@mnemo.test'
 const DEMO_PASSWORD = 'demo123456'
 const TEST_EMAIL = 'test@mnemo.test'
 const TEST_PASSWORD = 'test123456'
+// Mock mode (no Supabase keys) authenticates against in-memory data.
+const MOCK_EMAIL = 'alex@mnemo.app'
+const MOCK_PASSWORD = 'demo1234'
 
 function classifyError(err: unknown): string {
   if (err instanceof TypeError && err.message.toLowerCase().includes('fetch')) {
     return 'Unable to connect. Please check your internet connection.'
   }
   return 'Incorrect email or password.'
+}
+
+// `next` arrives from the URL (middleware sets it), so only same-origin paths
+// are honoured — never a protocol-relative or absolute URL.
+function safeNext(): string {
+  const next = new URLSearchParams(window.location.search).get('next')
+  if (!next || !next.startsWith('/') || next.startsWith('//')) return '/dashboard'
+  return next
 }
 
 export default function LoginPage() {
@@ -30,6 +41,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [attemptCount, setAttemptCount] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isAutoDemo, setIsAutoDemo] = useState(false)
 
   const isLockedOut = attemptCount >= MAX_ATTEMPTS
 
@@ -40,7 +52,7 @@ export default function LoginPage() {
     setIsSubmitting(true)
     try {
       await signIn(email, password, rememberMe)
-      window.location.href = '/dashboard'
+      window.location.href = safeNext()
     } catch (err) {
       const next = attemptCount + 1
       setAttemptCount(next)
@@ -54,18 +66,61 @@ export default function LoginPage() {
     }
   }
 
-  const quickLogin = async (e: string, p: string) => {
-    setError('')
-    setAttemptCount(0)
-    setIsSubmitting(true)
-    try {
-      await signIn(e, p, rememberMe)
-      window.location.href = '/dashboard'
-    } catch {
-      setError('Something went wrong. Please try again.')
-    } finally {
-      setIsSubmitting(false)
-    }
+  const quickLogin = useCallback(
+    async (e: string, p: string, remember: boolean): Promise<boolean> => {
+      setError('')
+      setAttemptCount(0)
+      setIsSubmitting(true)
+      try {
+        await signIn(e, p, remember)
+        window.location.href = safeNext()
+        return true
+      } catch {
+        setError('Something went wrong. Please try again.')
+        return false
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    [signIn],
+  )
+
+  // `/auth/login?demo=1` — the landing page's "View demo" buttons sign straight
+  // into the seeded account instead of dropping visitors on an empty form.
+  // Ref-guarded so it can only ever fire once per mount.
+  const autoDemoStarted = useRef(false)
+  useEffect(() => {
+    if (autoDemoStarted.current) return
+    if (new URLSearchParams(window.location.search).get('demo') !== '1') return
+    autoDemoStarted.current = true
+    setIsAutoDemo(true)
+    const [demoEmail, demoPassword] = isSupabaseConfigured()
+      ? [DEMO_EMAIL, DEMO_PASSWORD]
+      : [MOCK_EMAIL, MOCK_PASSWORD]
+    // On failure fall through to the normal form with the error shown.
+    void quickLogin(demoEmail, demoPassword, false).then((ok) => {
+      if (!ok) setIsAutoDemo(false)
+    })
+  }, [quickLogin])
+
+  if (isAutoDemo) {
+    return (
+      <div className="min-h-screen hero-gradient flex items-center justify-center p-4 sm:p-6">
+        <div className="absolute top-1/4 left-1/3 w-96 h-96 rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none" />
+        <div className="relative flex flex-col items-center gap-4 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <GraduationCap className="w-6 h-6 text-white" />
+          </div>
+          <span className="w-5 h-5 rounded-full border-2 border-white/20 border-t-indigo-400 animate-spin" />
+          <div>
+            <p className="text-sm font-medium text-foreground">Opening the demo account</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Signing you into a populated study workspace…
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -121,9 +176,6 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <div className="flex justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link href="#" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
-                  Forgot password?
-                </Link>
               </div>
               <div className="relative">
                 <Input
@@ -204,7 +256,7 @@ export default function LoginPage() {
                   variant="outline"
                   className="flex-1 min-h-[44px]"
                   size="lg"
-                  onClick={() => quickLogin(DEMO_EMAIL, DEMO_PASSWORD)}
+                  onClick={() => void quickLogin(DEMO_EMAIL, DEMO_PASSWORD, rememberMe)}
                   disabled={isSubmitting}
                 >
                   <Sparkles size={14} className="mr-2" />
@@ -214,7 +266,7 @@ export default function LoginPage() {
                   variant="outline"
                   className="flex-1 min-h-[44px]"
                   size="lg"
-                  onClick={() => quickLogin(TEST_EMAIL, TEST_PASSWORD)}
+                  onClick={() => void quickLogin(TEST_EMAIL, TEST_PASSWORD, rememberMe)}
                   disabled={isSubmitting}
                 >
                   <FlaskConical size={14} className="mr-2" />
@@ -227,7 +279,7 @@ export default function LoginPage() {
               variant="outline"
               className="w-full min-h-[44px]"
               size="lg"
-              onClick={() => quickLogin('alex@mnemo.app', 'demo1234')}
+              onClick={() => void quickLogin(MOCK_EMAIL, MOCK_PASSWORD, rememberMe)}
               disabled={isSubmitting}
             >
               Use demo account

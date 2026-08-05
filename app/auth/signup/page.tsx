@@ -156,10 +156,8 @@ export default function SignupPage() {
               </Button>
 
               <p className="text-xs text-muted-foreground text-center">
-                By creating an account, you agree to our{' '}
-                <Link href="#" className="text-indigo-400 hover:underline">Terms</Link>
-                {' '}and{' '}
-                <Link href="#" className="text-indigo-400 hover:underline">Privacy Policy</Link>.
+                Mnemo is a portfolio project, not a commercial service — no payment details
+                are ever collected. Please don&apos;t upload anything sensitive.
               </p>
             </form>
           </div>
