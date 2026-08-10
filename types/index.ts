@@ -146,6 +146,8 @@ export interface ChatSession {
   title: string
   createdAt: string
   messages: ChatMessage[]
+  /** True when a background reply landed here while another session was active. */
+  unread?: boolean
 }
 
 // ─── Study Analytics ──────────────────────────────────────────────────────────

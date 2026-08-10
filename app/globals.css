@@ -134,6 +134,20 @@
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
+  /*
+   * Floating overlays (Select/Dropdown menus) need to stay legible over
+   * arbitrary page content behind them, not just the plain background — the
+   * 3%-opacity .glass tuned for static cards lets underlying text/UI bleed
+   * through and become unreadable once opened over other content. This uses
+   * the --popover token (already defined, previously unused) at near-full
+   * opacity instead.
+   */
+  .glass-popover {
+    background: hsl(var(--popover) / 0.98);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
   .glass-hover {
     transition: background 0.2s ease, border-color 0.2s ease;
   }

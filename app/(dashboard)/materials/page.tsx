@@ -5,6 +5,7 @@ import { Plus, ArrowUpDown, FileText, StickyNote, Video, Link2, BookMarked, Uplo
 import { Button } from '@/components/ui/button'
 import { GlassCard } from '@/components/common/GlassCard'
 import { EmptyState } from '@/components/common/EmptyState'
+import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { Input } from '@/components/ui/input'
 import { useStudyMaterialStore, useUIStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
@@ -44,6 +45,7 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
   const { updateMaterial, deleteMaterial } = useStudyMaterialStore()
   const [isSummarizing, setIsSummarizing] = useState(false)
   const [showKeyPoints, setShowKeyPoints] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   async function summarize() {
     setIsSummarizing(true)
@@ -69,6 +71,7 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
   }
 
   return (
+    <>
     <div
       onClick={() => router.push(`/materials/${material.id}`)}
       className="flex items-start gap-4 px-4 py-4 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/[0.06] group cursor-pointer"
@@ -171,9 +174,7 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
           onClick={(e) => {
             e.preventDefault()
             e.stopPropagation()
-            if (window.confirm(`Delete "${material.title}"? This cannot be undone.`)) {
-              deleteMaterial(material.id)
-            }
+            setDeleteOpen(true)
           }}
         >
           <Trash2 size={11} />
@@ -181,6 +182,15 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
         </Button>
       </div>
     </div>
+    <ConfirmDialog
+      open={deleteOpen}
+      onOpenChange={setDeleteOpen}
+      title="Delete material?"
+      description={`Delete "${material.title}"? This cannot be undone.`}
+      confirmLabel="Delete"
+      onConfirm={() => deleteMaterial(material.id)}
+    />
+    </>
   )
 }
 

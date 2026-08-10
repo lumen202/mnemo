@@ -469,12 +469,20 @@ const INITIAL_SESSION: ChatSession = {
 interface AIState {
   sessions: ChatSession[]
   activeSessionId: string
-  messages: ChatMessage[]       // mirrors active session — kept for component compat
+  messages: ChatMessage[]       // mirrors the ACTIVE session — kept for component compat
   insights: AIInsight[]
-  isTyping: boolean
-  addMessage: (msg: ChatMessage) => void
-  updateMessage: (id: string, content: string) => void
-  setTyping: (v: boolean) => void
+  /** Session ids with a request currently in flight (server "thinking" or streaming tokens). */
+  typingSessionIds: string[]
+  /**
+   * Every add/update call is bound to the session that originated it, not
+   * whatever happens to be active when the response arrives — a reply for a
+   * session the user has since navigated away from must land in `sessions`
+   * only, not overwrite the transcript currently on screen. Session id
+   * defaults to the active one so most call sites can omit it.
+   */
+  addMessage: (msg: ChatMessage, sessionId?: string) => void
+  updateMessage: (id: string, content: string, sessionId?: string) => void
+  setSessionTyping: (sessionId: string, typing: boolean) => void
   clearChat: () => void
   newSession: () => void
   switchSession: (id: string) => void
@@ -488,7 +496,7 @@ export const useAIStore = create<AIState>((set) => ({
   activeSessionId: INITIAL_SESSION_ID,
   messages: SAMPLE_CHAT_MESSAGES,
   insights: [],
-  isTyping: false,
+  typingSessionIds: [],
 
   loadInsights: async (userId) => {
     if (isSupabaseConfigured()) {
@@ -499,31 +507,45 @@ export const useAIStore = create<AIState>((set) => ({
     }
   },
 
-  addMessage: (msg) =>
+  addMessage: (msg, sessionId) =>
     set((state) => {
-      const updated = [...state.messages, msg]
-      // Auto-title new sessions from the first user message
+      const targetId = sessionId ?? state.activeSessionId
+      const targetIsActive = targetId === state.activeSessionId
       const sessions = state.sessions.map((s) => {
-        if (s.id !== state.activeSessionId) return s
+        if (s.id !== targetId) return s
+        const updated = [...s.messages, msg]
+        // Auto-title new sessions from the first user message
         const title =
           s.title === 'New Chat' && msg.role === 'user'
             ? msg.content.slice(0, 42) + (msg.content.length > 42 ? '…' : '')
             : s.title
-        return { ...s, messages: updated, title }
+        // A reply that lands while its session isn't on screen gets flagged
+        // unread rather than silently overwriting whatever IS on screen.
+        return { ...s, messages: updated, title, unread: !targetIsActive && msg.role === 'assistant' }
       })
-      return { messages: updated, sessions }
+      if (!targetIsActive) return { sessions }
+      const messages = sessions.find((s) => s.id === state.activeSessionId)?.messages ?? state.messages
+      return { messages, sessions }
     }),
 
-  updateMessage: (id, content) =>
+  updateMessage: (id, content, sessionId) =>
     set((state) => {
-      const updated = state.messages.map((m) => (m.id === id ? { ...m, content } : m))
+      const targetId = sessionId ?? state.activeSessionId
+      const targetIsActive = targetId === state.activeSessionId
       const sessions = state.sessions.map((s) =>
-        s.id === state.activeSessionId ? { ...s, messages: updated } : s
+        s.id === targetId ? { ...s, messages: s.messages.map((m) => (m.id === id ? { ...m, content } : m)) } : s
       )
-      return { messages: updated, sessions }
+      if (!targetIsActive) return { sessions }
+      const messages = sessions.find((s) => s.id === state.activeSessionId)?.messages ?? state.messages
+      return { messages, sessions }
     }),
 
-  setTyping: (isTyping) => set({ isTyping }),
+  setSessionTyping: (sessionId, typing) =>
+    set((state) => ({
+      typingSessionIds: typing
+        ? state.typingSessionIds.includes(sessionId) ? state.typingSessionIds : [...state.typingSessionIds, sessionId]
+        : state.typingSessionIds.filter((id) => id !== sessionId),
+    })),
 
   clearChat: () =>
     set((state) => ({
@@ -544,7 +566,10 @@ export const useAIStore = create<AIState>((set) => ({
     set((state) => {
       const session = state.sessions.find((s) => s.id === id)
       if (!session) return state
-      return { activeSessionId: id, messages: session.messages }
+      const sessions = session.unread
+        ? state.sessions.map((s) => (s.id === id ? { ...s, unread: false } : s))
+        : state.sessions
+      return { activeSessionId: id, messages: session.messages, sessions }
     }),
 
   deleteSession: (id) =>
@@ -575,7 +600,7 @@ export const useAIStore = create<AIState>((set) => ({
       activeSessionId: 'session_initial',
       messages: SAMPLE_CHAT_MESSAGES,
       insights: [],
-      isTyping: false,
+      typingSessionIds: [],
     }),
 }))
 

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { GlassCard } from '@/components/common/GlassCard'
+import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useStudyMaterialStore } from '@/store'
 import { getMaterialContent } from '@/services/supabase/repository'
 import { isSupabaseConfigured } from '@/lib/env'
@@ -48,6 +49,7 @@ export default function MaterialDetailPage() {
   const [contentLoading, setContentLoading] = useState(false)
   const [showContent, setShowContent] = useState(true)
   const [isSummarizing, setIsSummarizing] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   useEffect(() => {
     if (!material || content !== null) return
@@ -102,15 +104,14 @@ export default function MaterialDetailPage() {
     }
   }
 
-  function handleDelete() {
+  function confirmDelete() {
     if (!material) return
-    if (window.confirm(`Delete "${material.title}"? This cannot be undone.`)) {
-      deleteMaterial(material.id)
-      router.push('/materials')
-    }
+    deleteMaterial(material.id)
+    router.push('/materials')
   }
 
   return (
+    <>
     <div className="max-w-3xl mx-auto space-y-5">
       {/* Back */}
       <button
@@ -186,7 +187,7 @@ export default function MaterialDetailPage() {
             size="sm"
             variant="ghost"
             className="gap-1.5 text-xs text-muted-foreground hover:text-red-400 hover:bg-red-500/10 ml-auto"
-            onClick={handleDelete}
+            onClick={() => setDeleteOpen(true)}
           >
             <Trash2 size={12} />
             Delete
@@ -251,5 +252,14 @@ export default function MaterialDetailPage() {
         </GlassCard>
       )}
     </div>
+    <ConfirmDialog
+      open={deleteOpen}
+      onOpenChange={setDeleteOpen}
+      title="Delete material?"
+      description={`Delete "${material.title}"? This cannot be undone.`}
+      confirmLabel="Delete"
+      onConfirm={confirmDelete}
+    />
+    </>
   )
 }

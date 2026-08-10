@@ -35,7 +35,15 @@ export async function POST(req: NextRequest) {
     const history: { role: string; content: string }[] = Array.isArray(body.history) ? body.history : []
 
     // ── Vault / Cache lookup ──────────────────────────────────────────────────
-    const cached = vaultLookup(message, history)
+    // The LRU cache tier stores real model output and is a single in-memory
+    // store shared by every user this server process serves. The client only
+    // sends `context` for personal-progress questions (see isPersonalQuery in
+    // utils/aiContext.ts) — those answers may reference this student's real
+    // streak/subjects/materials, so reusing them for a different student would
+    // leak their study data. The static knowledge vault is pre-written,
+    // non-personalized text, so it stays available either way (see lookup()).
+    const skipCache = Boolean(body.context)
+    const cached = vaultLookup(message, history, !skipCache)
     if (cached) {
       return streamText(cached.content)
     }
@@ -43,7 +51,7 @@ export async function POST(req: NextRequest) {
     // Mock mode — no API key configured, return JSON
     if (!aiClient.isConfigured()) {
       const result = await runMock({ message, context: body.context, history })
-      vaultStore(message, result.content, history)
+      if (!skipCache) vaultStore(message, result.content, history)
       return NextResponse.json(result)
     }
 
@@ -77,7 +85,7 @@ export async function POST(req: NextRequest) {
             full += token
             controller.enqueue(encoder.encode(token))
           }
-          vaultStore(message, full, history)
+          if (!skipCache) vaultStore(message, full, history)
         } catch (err) {
           const msg = err instanceof Error ? err.message : 'AI error'
           controller.enqueue(encoder.encode(`\n\n*Sorry, something went wrong: ${msg}. Please try again.*`))

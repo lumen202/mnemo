@@ -19,6 +19,15 @@ async function extractDocx(file: File): Promise<string> {
   return result.value
 }
 
+async function extractPdf(file: File): Promise<string> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await fetch('/api/documents/extract-pdf', { method: 'POST', body: formData })
+  const data = await res.json().catch(() => ({ error: 'Could not read the PDF.' }))
+  if (!res.ok) throw new Error(data.error ?? 'Could not read the PDF.')
+  return data.text as string
+}
+
 async function uploadToStorage(file: File): Promise<string | null> {
   if (!isSupabaseConfigured()) return null
   const ext = file.name.split('.').pop() ?? 'txt'
@@ -81,13 +90,15 @@ export function AddMaterialModal() {
     const isDocx =
       file.name.endsWith('.docx') ||
       file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf'
 
-    if (!isTxt && !isDocx) {
-      setError('Only .txt and .docx files are supported. For PDFs, paste the content below.')
+    if (!isTxt && !isDocx && !isPdf) {
+      setError('Only .txt, .docx, and .pdf files are supported.')
       return
     }
 
     if (!title) setTitle(file.name.replace(/\.[^/.]+$/, ''))
+    if (isPdf) setMaterialType('pdf')
     setUploadFile(file)
     setError('')
 
@@ -96,6 +107,18 @@ export function AddMaterialModal() {
       extractDocx(file)
         .then((text) => { setContent(text); setIsExtracting(false) })
         .catch(() => { setError('Could not read the Word file. Try pasting the content instead.'); setIsExtracting(false) })
+      return
+    }
+
+    if (isPdf) {
+      setIsExtracting(true)
+      extractPdf(file)
+        .then((text) => { setContent(text); setIsExtracting(false) })
+        .catch((err) => {
+          const message = err instanceof Error ? err.message : 'Could not read the PDF.'
+          setError(`${message} Try pasting the content instead.`)
+          setIsExtracting(false)
+        })
       return
     }
 
@@ -207,17 +230,17 @@ export function AddMaterialModal() {
                   <p className="text-sm text-indigo-400 font-medium">{uploadFile.name}</p>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    Drop a <span className="text-foreground font-medium">.txt</span> or{' '}
+                    Drop a <span className="text-foreground font-medium">.pdf</span>,{' '}
+                    <span className="text-foreground font-medium">.txt</span>, or{' '}
                     <span className="text-foreground font-medium">.docx</span> file here or click to browse
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground/60 mt-1">For PDFs — paste the text content below</p>
               </>
             )}
             <input
               ref={fileRef}
               type="file"
-              accept=".txt,.docx,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              accept=".txt,.docx,.pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
               className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
             />

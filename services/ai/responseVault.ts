@@ -33,13 +33,21 @@ function buildCacheKey(message: string, history?: { role: string; content: strin
 
 function matchVault(message: string): VaultEntry | null {
   const norm = normalize(message)
+  const words = new Set(norm.split(' '))
   let best: VaultEntry | null = null
   let bestHits = 0
 
   for (const entry of KNOWLEDGE_VAULT) {
     let hits = 0
     for (const kw of entry.keywords) {
-      if (norm.includes(normalize(kw))) hits++
+      const kwNorm = normalize(kw)
+      // Single-word keywords need a whole-word match — plain substring search
+      // let "hi" match inside "history"/"this"/"his", firing the greeting
+      // catch-all on completely unrelated questions. Multi-word phrases
+      // ("binary search tree") are specific enough that substring is safe and
+      // also catches minor surrounding punctuation/suffix variation.
+      const isMatch = kwNorm.includes(' ') ? norm.includes(kwNorm) : words.has(kwNorm)
+      if (isMatch) hits++
     }
     if (hits > bestHits) {
       bestHits = hits
@@ -50,14 +58,26 @@ function matchVault(message: string): VaultEntry | null {
   return bestHits >= 1 ? best : null
 }
 
+/**
+ * `allowCache` gates only the LRU tier (live, previously-generated answers).
+ * The static KNOWLEDGE_VAULT is pre-written, non-personalized text — always
+ * safe to serve. The LRU cache stores real model output that may have been
+ * generated with a student's personal context woven in, and this cache is a
+ * single process-wide store shared by every user, so callers set
+ * `allowCache: false` whenever the current request carries personal context
+ * that must never leak into another student's cached answer.
+ */
 export function lookup(
   message: string,
-  history?: { role: string; content: string }[]
+  history?: { role: string; content: string }[],
+  allowCache = true
 ): { content: string; source: 'vault' | 'cache' } | null {
   const vaultEntry = matchVault(message)
   if (vaultEntry) {
     return { content: vaultEntry.response, source: 'vault' }
   }
+
+  if (!allowCache) return null
 
   const key = buildCacheKey(message, history)
   const cached = lruCache.get(key)

@@ -8,7 +8,6 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAIStore } from '@/store'
-import { MOCK_INSIGHTS } from '@/data/mockData'
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -73,7 +72,7 @@ function PanelSection({
 }
 
 export function TutorPanel() {
-  const { sessions, activeSessionId, newSession, switchSession, deleteSession } = useAIStore()
+  const { sessions, activeSessionId, newSession, switchSession, deleteSession, typingSessionIds, insights } = useAIStore()
   // Most-recent first
   const sorted = [...sessions].reverse()
 
@@ -94,6 +93,7 @@ export function TutorPanel() {
         <div className="space-y-1">
           {sorted.map((session) => {
             const active = session.id === activeSessionId
+            const isGenerating = typingSessionIds.includes(session.id)
             return (
               <div
                 key={session.id}
@@ -105,12 +105,19 @@ export function TutorPanel() {
                 )}
                 onClick={() => switchSession(session.id)}
               >
+                {session.unread && !active && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" title="New reply" />
+                )}
                 <div className="flex-1 min-w-0">
                   <p className={cn('text-xs font-medium truncate', active ? 'text-indigo-300' : 'text-foreground')}>
                     {session.title}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5" suppressHydrationWarning>
-                    {session.messages.length} msg{session.messages.length !== 1 ? 's' : ''} · {relativeTime(session.createdAt)}
+                  <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1" suppressHydrationWarning>
+                    {isGenerating ? (
+                      <span className="text-indigo-400">Generating…</span>
+                    ) : (
+                      <>{session.messages.length} msg{session.messages.length !== 1 ? 's' : ''} · {relativeTime(session.createdAt)}</>
+                    )}
                   </p>
                 </div>
                 {sessions.length > 1 && (
@@ -147,23 +154,29 @@ export function TutorPanel() {
 
       {/* Active insights */}
       <PanelSection label="Insights" icon={Sparkles}>
-        <div className="space-y-2">
-          {MOCK_INSIGHTS.slice(0, 3).map((insight) => {
-            const cfg = INSIGHT_ICONS[insight.type]
-            const Icon = cfg.icon
-            return (
-              <div key={insight.id} className={cn('rounded-xl p-3 border border-white/[0.06]', cfg.bg)}>
-                <div className="flex items-start gap-2">
-                  <Icon size={12} className={cn('shrink-0 mt-0.5', cfg.color)} />
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold text-foreground leading-tight mb-0.5">{insight.title}</p>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-2">{insight.description}</p>
+        {insights.length === 0 ? (
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            Log some study sessions and upload materials — insights show up here once there's enough activity to learn from.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {insights.slice(0, 3).map((insight) => {
+              const cfg = INSIGHT_ICONS[insight.type]
+              const Icon = cfg.icon
+              return (
+                <div key={insight.id} className={cn('rounded-xl p-3 border border-white/[0.06]', cfg.bg)}>
+                  <div className="flex items-start gap-2">
+                    <Icon size={12} className={cn('shrink-0 mt-0.5', cfg.color)} />
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold text-foreground leading-tight mb-0.5">{insight.title}</p>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-2">{insight.description}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )}
       </PanelSection>
 
       {/* About tutor */}
@@ -174,6 +187,7 @@ export function TutorPanel() {
             { icon: Sparkles, desc: 'Adapts to your study materials'    },
             { icon: Target,   desc: 'Goal-oriented learning guidance'   },
             { icon: BookOpen, desc: 'Ask about any uploaded material'   },
+            { icon: MessageSquare, desc: 'Stats & facts answered instantly — streaks, due cards, and Wikipedia lookups skip the AI entirely' },
           ].map(({ icon: Icon, desc }) => (
             <div key={desc} className="flex items-center gap-2.5">
               <div className="w-6 h-6 rounded-lg bg-indigo-500/15 flex items-center justify-center shrink-0">
