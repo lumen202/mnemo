@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { CircleHelp, Sparkles, CheckCircle, XCircle, Trophy, RotateCcw, ChevronRight, Loader2, LayoutGrid, Layers, BookOpen } from 'lucide-react'
-import { GlassCard } from '@/components/common/GlassCard'
+import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/common/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -57,30 +57,30 @@ function QuizPlayer({ quiz, onFinish }: { quiz: Quiz; onFinish: (score: number) 
           <span>Question {questionIndex + 1} of {quiz.questions.length}</span>
           <span>{Object.keys(answers).length} answered</span>
         </div>
-        <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden">
+        <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-500 transition-all duration-300"
+            className="h-full rounded-full bg-primary transition-all duration-300"
             style={{ width: `${((questionIndex) / quiz.questions.length) * 100}%` }}
           />
         </div>
       </div>
 
       {/* Question */}
-      <GlassCard className="p-6">
+      <Card className="p-6">
         <p className="text-base font-semibold text-foreground mb-5 leading-relaxed">
           {question.question}
         </p>
 
         <div className="space-y-2.5">
           {question.options.map((option, idx) => {
-            let optionClass = 'border-white/[0.07] text-muted-foreground hover:border-indigo-500/40 hover:text-foreground hover:bg-indigo-500/5'
+            let optionClass = 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-primary/5'
             if (isAnswered) {
               if (idx === question.correctAnswer) {
                 optionClass = 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
               } else if (idx === selectedAnswer && idx !== question.correctAnswer) {
                 optionClass = 'border-rose-500/40 bg-rose-500/10 text-rose-300'
               } else {
-                optionClass = 'border-white/[0.04] text-muted-foreground/50'
+                optionClass = 'border-border text-muted-foreground/50'
               }
             }
 
@@ -100,7 +100,7 @@ function QuizPlayer({ quiz, onFinish }: { quiz: Quiz; onFinish: (score: number) 
                   'w-6 h-6 rounded-full border flex items-center justify-center text-xs font-semibold shrink-0',
                   isAnswered && idx === question.correctAnswer ? 'border-emerald-400 text-emerald-400' :
                   isAnswered && idx === selectedAnswer ? 'border-rose-400 text-rose-400' :
-                  'border-white/20 text-muted-foreground'
+                  'border-border text-muted-foreground'
                 )}>
                   {String.fromCharCode(65 + idx)}
                 </span>
@@ -127,7 +127,7 @@ function QuizPlayer({ quiz, onFinish }: { quiz: Quiz; onFinish: (score: number) 
             {question.explanation}
           </div>
         )}
-      </GlassCard>
+      </Card>
 
       {isAnswered && (
         <div className="flex justify-end">
@@ -143,14 +143,14 @@ function QuizPlayer({ quiz, onFinish }: { quiz: Quiz; onFinish: (score: number) 
 
 function QuizResult({ quiz, score, onRetry }: { quiz: Quiz; score: number; onRetry: () => void }) {
   const grade = score >= 90 ? { label: 'Excellent!', color: 'text-emerald-400', bg: 'bg-emerald-500/15' }
-    : score >= 75 ? { label: 'Good job!', color: 'text-indigo-400', bg: 'bg-indigo-500/15' }
+    : score >= 75 ? { label: 'Good job!', color: 'text-primary', bg: 'bg-primary/15' }
     : score >= 60 ? { label: 'Keep practicing', color: 'text-amber-400', bg: 'bg-amber-500/15' }
     : { label: 'Needs review', color: 'text-rose-400', bg: 'bg-rose-500/15' }
 
   return (
-    <GlassCard className="p-8 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/30 to-cyan-500/30 border border-indigo-500/30 flex items-center justify-center mx-auto mb-4">
-        <Trophy className="w-8 h-8 text-indigo-300" />
+    <Card className="p-8 text-center">
+      <div className="w-16 h-16 rounded-2xl bg-primary/15 border border-primary/30 flex items-center justify-center mx-auto mb-4">
+        <Trophy className="w-8 h-8 text-primary" />
       </div>
       <h3 className="text-xl font-bold text-foreground mb-2">{grade.label}</h3>
       <div className={cn('text-5xl font-bold tabular-nums mb-2', grade.color)}>{score}%</div>
@@ -159,7 +159,7 @@ function QuizResult({ quiz, score, onRetry }: { quiz: Quiz; score: number; onRet
         <RotateCcw size={14} />
         Retry Quiz
       </Button>
-    </GlassCard>
+    </Card>
   )
 }
 
@@ -234,10 +234,10 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
   }
 
   return (
-    <GlassCard className="p-5" glow="indigo">
+    <Card className="p-5">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
-          <Sparkles className="w-4 h-4 text-indigo-400" />
+        <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+          <Sparkles className="w-4 h-4 text-primary" />
         </div>
         <div>
           <h3 className="text-sm font-semibold text-foreground">AI Quiz Generator</h3>
@@ -248,7 +248,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
       <div className="space-y-3">
         {materials.length > 0 && (
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground">From study material (optional)</label>
+            <label className="text-xs font-medium text-muted-foreground">From study material (optional)</label>
             <Select value={selectedMaterial?.id ?? '__none__'} onValueChange={pickMaterial}>
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="None — enter topic below" />
@@ -258,7 +258,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
                 {materials.map((m) => (
                   <SelectItem key={m.id} value={m.id}>
                     {m.title}
-                    <span className="ml-2 text-muted-foreground text-[10px]">{SUBJECT_META[m.subject]?.label}</span>
+                    <span className="ml-2 text-muted-foreground text-xs">{SUBJECT_META[m.subject]?.label}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -268,7 +268,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground">Subject</label>
+            <label className="text-xs font-medium text-muted-foreground">Subject</label>
             <Select value={subject} onValueChange={(v) => setSubject(v as SubjectId)}>
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue />
@@ -281,7 +281,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
             </Select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground">Number of questions</label>
+            <label className="text-xs font-medium text-muted-foreground">Number of questions</label>
             <Select value={String(count)} onValueChange={(v) => setCount(Number(v))}>
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue />
@@ -296,7 +296,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-[11px] font-medium text-muted-foreground">
+          <label className="text-xs font-medium text-muted-foreground">
             {selectedMaterial ? 'Topic (from material)' : 'Topic / content to quiz on'}
           </label>
           <Textarea
@@ -313,7 +313,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
             }}
           />
           {selectedMaterial && (
-            <p className="text-[11px] text-indigo-400/80">
+            <p className="text-xs text-primary/80">
               Using full content of &ldquo;{selectedMaterial.title}&rdquo; — edit above to override
             </p>
           )}
@@ -332,7 +332,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
           {error && <span className="text-xs text-rose-400">{error}</span>}
         </div>
       </div>
-    </GlassCard>
+    </Card>
   )
 }
 
@@ -342,10 +342,10 @@ function QuizCard({ quiz, onStart }: { quiz: Quiz; onStart: (quiz: Quiz) => void
   const meta = SUBJECT_META[quiz.subjectId]
   const score = quiz.score
   const isCompleted = score !== undefined
-  const scoreColor = !isCompleted ? '' : score >= 90 ? 'text-emerald-400' : score >= 70 ? 'text-indigo-400' : 'text-amber-400'
+  const scoreColor = !isCompleted ? '' : score >= 90 ? 'text-emerald-400' : score >= 70 ? 'text-primary' : 'text-amber-400'
 
   return (
-    <GlassCard className="p-5 flex flex-col gap-4 glass-hover card-shine">
+    <Card className="p-5 flex flex-col gap-4 hover:bg-accent transition-colors">
       <div className="flex items-start justify-between">
         <div
           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
@@ -365,8 +365,8 @@ function QuizCard({ quiz, onStart }: { quiz: Quiz; onStart: (quiz: Quiz) => void
         <p className="text-xs text-muted-foreground">{meta?.label} · {quiz.totalQuestions} questions</p>
       </div>
 
-      <div className="flex items-center justify-between pt-1 border-t border-white/[0.05]">
-        <span className="text-[10px] text-muted-foreground">
+      <div className="flex items-center justify-between pt-1 border-t border-border">
+        <span className="text-xs text-muted-foreground">
           {isCompleted
             ? `Completed ${new Date(quiz.completedAt!).toLocaleDateString()}`
             : `Created ${new Date(quiz.createdAt).toLocaleDateString()}`}
@@ -381,7 +381,7 @@ function QuizCard({ quiz, onStart }: { quiz: Quiz; onStart: (quiz: Quiz) => void
           <ChevronRight size={11} />
         </Button>
       </div>
-    </GlassCard>
+    </Card>
   )
 }
 
@@ -413,7 +413,7 @@ function QuizzesGroupedBySubject({ quizzes, onStart }: { quizzes: Quiz[]; onStar
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-foreground">{meta?.label ?? subjectId}</h3>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {groupQuizzes.length} quiz{groupQuizzes.length !== 1 ? 'zes' : ''} · {completedCount} completed
                 </p>
               </div>
@@ -473,7 +473,7 @@ function QuizzesGroupedByMaterial({
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-foreground">{mat?.title ?? materialId}</h3>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {meta?.label ?? 'Unknown'} · {groupQuizzes.length} quiz{groupQuizzes.length !== 1 ? 'zes' : ''} · {completedCount} completed
                 </p>
               </div>
@@ -490,12 +490,12 @@ function QuizzesGroupedByMaterial({
       {ungrouped.length > 0 && (
         <div>
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white/5 text-muted-foreground">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-accent text-muted-foreground">
               <Layers size={14} />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-foreground">Ungrouped</h3>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {ungrouped.length} quiz{ungrouped.length !== 1 ? 'zes' : ''} · no linked material
               </p>
             </div>
@@ -580,11 +580,11 @@ export default function QuizzesPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {[
-          { label: 'Total Quizzes', value: quizzes.length, color: 'text-indigo-400', bg: 'bg-indigo-500/15' },
+          { label: 'Total Quizzes', value: quizzes.length, color: 'text-primary', bg: 'bg-primary/15' },
           { label: 'Completed',     value: completed.length, color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
           { label: 'Avg Score',     value: `${avgScore}%`, color: 'text-amber-400', bg: 'bg-amber-500/15' },
         ].map(({ label, value, color, bg }) => (
-          <div key={label} className={cn('rounded-xl p-4 border border-white/[0.06]', bg)}>
+          <div key={label} className={cn('rounded-xl p-4 border border-border', bg)}>
             <p className="text-xs text-muted-foreground mb-1">{label}</p>
             <p className={cn('text-2xl font-bold tabular-nums', color)}>{value}</p>
           </div>
@@ -606,7 +606,7 @@ export default function QuizzesPage() {
       {/* View mode toggle */}
       <div className="flex items-center gap-3">
         <h2 className="text-sm font-semibold text-foreground">Your Quizzes</h2>
-        <div className="flex items-center rounded-xl border border-white/[0.08] bg-white/[0.02] p-0.5 ml-auto">
+        <div className="flex items-center rounded-xl border border-border bg-accent/40 p-0.5 ml-auto">
           {([
             { id: 'all' as const, label: 'All', icon: LayoutGrid },
             { id: 'by-subject' as const, label: 'By Subject', icon: Layers },
@@ -618,7 +618,7 @@ export default function QuizzesPage() {
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
                 viewMode === id
-                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                  ? 'bg-primary/20 text-primary border border-primary/30'
                   : 'text-muted-foreground hover:text-foreground border border-transparent'
               )}
             >

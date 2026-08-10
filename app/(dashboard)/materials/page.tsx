@@ -3,15 +3,16 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, ArrowUpDown, FileText, StickyNote, Video, Link2, BookMarked, Upload, Sparkles, Loader2, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { GlassCard } from '@/components/common/GlassCard'
+import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { Input } from '@/components/ui/input'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { useStudyMaterialStore, useUIStore } from '@/store'
-import { SUBJECT_META } from '@/data/mockData'
+import { SUBJECT_META, STATUS_CONFIG } from '@/data/mockData'
 import { StatCard } from '@/components/common/StatCard'
 import { cn } from '@/lib/utils'
-import type { MaterialType, MaterialStatus, StudyMaterial } from '@/types'
+import type { MaterialType, StudyMaterial } from '@/types'
 import { BookOpen, CheckCircle } from 'lucide-react'
 
 const TYPE_ICONS: Record<MaterialType, typeof FileText> = {
@@ -28,13 +29,6 @@ const TYPE_LABELS: Record<MaterialType, string> = {
   video:    'Video',
   link:     'Link',
   textbook: 'Textbook',
-}
-
-const STATUS_CONFIG: Record<MaterialStatus, { label: string; color: string; bg: string }> = {
-  pending:    { label: 'Pending',    color: 'text-muted-foreground', bg: 'bg-muted/40'          },
-  summarized: { label: 'Summarized', color: 'text-amber-400',        bg: 'bg-amber-500/15'       },
-  reviewed:   { label: 'Reviewed',   color: 'text-indigo-400',       bg: 'bg-indigo-500/15'      },
-  mastered:   { label: 'Mastered',   color: 'text-emerald-400',      bg: 'bg-emerald-500/15'     },
 }
 
 function MaterialCard({ material }: { material: StudyMaterial }) {
@@ -74,18 +68,18 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
     <>
     <div
       onClick={() => router.push(`/materials/${material.id}`)}
-      className="flex items-start gap-4 px-4 py-4 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/[0.06] group cursor-pointer"
+      className="flex items-start gap-4 px-4 py-4 rounded-xl hover:bg-accent transition-colors border border-transparent hover:border-border group cursor-pointer"
       role="link"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/materials/${material.id}`) }}
     >
       <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5', meta?.bg ?? 'bg-slate-500/20')}>
-        <IconComp className="w-4.5 h-4.5" style={{ color: meta?.color }} size={18} />
+        <IconComp className="w-5 h-5" style={{ color: meta?.color }} size={18} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2 mb-1">
           <p className="text-sm font-semibold text-foreground leading-tight">{material.title}</p>
-          <div className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0', status.bg, status.color)}>
+          <div className={cn('text-xs px-2 py-0.5 rounded-full font-medium shrink-0', status.bg, status.color)}>
             {status.label}
           </div>
         </div>
@@ -113,7 +107,7 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
           <div className="mt-2">
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowKeyPoints(!showKeyPoints) }}
-              className="flex items-center gap-1 text-[11px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+              className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
             >
               {showKeyPoints ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
               {showKeyPoints ? 'Hide' : 'Key Points'} ({material.keyPoints.length})
@@ -122,10 +116,10 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
               <ul className="mt-2 space-y-1.5">
                 {material.keyPoints.map((kp, i) => (
                   <li key={i} className="flex items-start gap-2">
-                    <span className="w-3.5 h-3.5 rounded-full bg-indigo-500/20 text-indigo-400 text-[9px] flex items-center justify-center shrink-0 mt-0.5 font-medium">
+                    <span className="w-4 h-4 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center shrink-0 mt-0.5 font-medium">
                       {i + 1}
                     </span>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">{kp}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{kp}</p>
                   </li>
                 ))}
               </ul>
@@ -135,7 +129,7 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
         {material.tags && material.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {material.tags.slice(0, 3).map((tag) => (
-              <span key={tag} className="text-[10px] px-2 py-0.5 bg-white/5 border border-white/[0.06] rounded-full text-muted-foreground">
+              <span key={tag} className="text-xs px-2 py-0.5 bg-accent border border-border rounded-full text-muted-foreground">
                 {tag}
               </span>
             ))}
@@ -150,7 +144,7 @@ function MaterialCard({ material }: { material: StudyMaterial }) {
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors"
+            className="text-xs text-primary hover:text-primary/80 transition-colors"
           >
             Download
           </a>
@@ -237,8 +231,8 @@ export default function MaterialsPage() {
           trend="up"
           trendValue="3 added this week"
           icon={<BookOpen />}
-          iconBg="bg-indigo-500/15"
-          accentColor="text-indigo-400"
+          iconBg="bg-primary/15"
+          accentColor="text-primary"
         />
         <StatCard
           label="AI Summarized"
@@ -261,11 +255,11 @@ export default function MaterialsPage() {
       </div>
 
       {/* Upload banner */}
-      <GlassCard className="p-5" glow="indigo">
+      <Card className="p-5">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
-              <Upload className="w-5 h-5 text-indigo-400" />
+            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+              <Upload className="w-5 h-5 text-primary" />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-1">Upload Study Materials</h3>
@@ -279,10 +273,10 @@ export default function MaterialsPage() {
             Upload
           </Button>
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Materials table */}
-      <GlassCard className="p-6">
+      <Card className="p-6">
         <div className="flex items-center justify-between mb-5 gap-4 flex-wrap">
           <div>
             <h2 className="text-base font-semibold text-foreground">All Materials</h2>
@@ -315,30 +309,32 @@ export default function MaterialsPage() {
             onChange={(e) => setSearch(e.target.value)}
             className="max-w-xs h-8 text-sm"
           />
-          <select
-            value={subjectFilter}
-            onChange={(e) => setSubjectFilter(e.target.value)}
-            className="h-8 text-xs bg-background border border-border rounded-lg px-3 text-foreground"
-          >
-            <option value="all">All subjects</option>
-            {uniqueSubjects.map((s) => (
-              <option key={s} value={s}>{SUBJECT_META[s]?.label ?? s}</option>
-            ))}
-          </select>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-8 text-xs bg-background border border-border rounded-lg px-3 text-foreground"
-          >
-            <option value="all">All statuses</option>
-            <option value="pending">Pending</option>
-            <option value="summarized">Summarized</option>
-            <option value="reviewed">Reviewed</option>
-            <option value="mastered">Mastered</option>
-          </select>
+          <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+            <SelectTrigger className="h-8 w-auto text-xs px-3">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All subjects</SelectItem>
+              {uniqueSubjects.map((s) => (
+                <SelectItem key={s} value={s}>{SUBJECT_META[s]?.label ?? s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-8 w-auto text-xs px-3">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="summarized">Summarized</SelectItem>
+              <SelectItem value="reviewed">Reviewed</SelectItem>
+              <SelectItem value="mastered">Mastered</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <div className="divide-y divide-white/[0.04]">
+        <div className="divide-y divide-border">
           {materials.length === 0 ? (
             <EmptyState
               icon={Upload}
@@ -366,7 +362,7 @@ export default function MaterialsPage() {
             </div>
           )}
         </div>
-      </GlassCard>
+      </Card>
     </div>
   )
 }

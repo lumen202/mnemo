@@ -1,7 +1,7 @@
 'use client'
 import { Component, type ReactNode } from 'react'
 import { AlertTriangle, RotateCcw } from 'lucide-react'
-import { GlassCard } from '@/components/common/GlassCard'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 interface Props {
@@ -27,9 +27,9 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="flex-1 flex items-center justify-center p-6 min-h-[60vh]">
-          <GlassCard className="max-w-sm w-full p-6 text-center">
-            <div className="w-11 h-11 rounded-2xl bg-rose-500/15 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle size={20} className="text-rose-400" />
+          <Card className="max-w-sm w-full p-6 text-center">
+            <div className="w-11 h-11 rounded-2xl bg-destructive/15 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle size={20} className="text-destructive" />
             </div>
             <h2 className="text-base font-semibold text-foreground mb-1.5">Something went wrong</h2>
             <p className="text-sm text-muted-foreground mb-5">
@@ -38,7 +38,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <Button onClick={() => window.location.reload()} className="gap-2 w-full">
               <RotateCcw size={14} /> Reload
             </Button>
-          </GlassCard>
+          </Card>
         </div>
       )
     }

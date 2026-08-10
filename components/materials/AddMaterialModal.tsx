@@ -3,7 +3,8 @@ import { useState, useRef } from 'react'
 import { X, Upload, Plus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { GlassCard } from '@/components/common/GlassCard'
+import { Card } from '@/components/ui/card'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { useStudyMaterialStore, useUIStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
 import { supabase } from '@/services/supabase/client'
@@ -165,7 +166,7 @@ export function AddMaterialModal() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={close} />
-      <GlassCard className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 z-10">
+      <Card className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 z-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div>
@@ -176,7 +177,7 @@ export function AddMaterialModal() {
           </div>
           <button
             onClick={close}
-            className="p-1.5 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors"
+            className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
           >
             <X size={16} />
           </button>
@@ -195,15 +196,16 @@ export function AddMaterialModal() {
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Type</label>
-              <select
-                value={materialType}
-                onChange={(e) => setMaterialType(e.target.value as MaterialType)}
-                className="h-9 text-xs bg-background border border-border rounded-lg px-3 text-foreground"
-              >
-                {TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
+              <Select value={materialType} onValueChange={(v) => setMaterialType(v as MaterialType)}>
+                <SelectTrigger className="h-9 w-auto text-xs px-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -215,8 +217,8 @@ export function AddMaterialModal() {
             onClick={() => fileRef.current?.click()}
             className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
               isDragging
-                ? 'border-indigo-400/60 bg-indigo-500/10'
-                : 'border-white/[0.08] hover:border-white/20 hover:bg-white/[0.02]'
+                ? 'border-primary/60 bg-primary/10'
+                : 'border-border hover:border-muted-foreground/40 hover:bg-accent'
             }`}
           >
             {isExtracting ? (
@@ -227,7 +229,7 @@ export function AddMaterialModal() {
               <>
                 <Upload className="w-7 h-7 text-muted-foreground/50 mx-auto mb-2" />
                 {uploadFile ? (
-                  <p className="text-sm text-indigo-400 font-medium">{uploadFile.name}</p>
+                  <p className="text-sm text-primary font-medium">{uploadFile.name}</p>
                 ) : (
                   <p className="text-sm text-muted-foreground">
                     Drop a <span className="text-foreground font-medium">.pdf</span>,{' '}
@@ -254,10 +256,10 @@ export function AddMaterialModal() {
               onChange={(e) => setContent(e.target.value)}
               placeholder="Paste your lecture notes, PDF text, or any study material here..."
               rows={6}
-              className="w-full rounded-xl bg-white/[0.03] border border-white/[0.08] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-indigo-400/50 resize-none"
+              className="w-full rounded-xl bg-accent border border-border px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none"
             />
             {content && (
-              <p className="text-[11px] text-muted-foreground/60 mt-1">
+              <p className="text-xs text-muted-foreground/60 mt-1">
                 {content.split(/\s+/).filter(Boolean).length} words
               </p>
             )}
@@ -277,7 +279,7 @@ export function AddMaterialModal() {
             )}
           </Button>
         </div>
-      </GlassCard>
+      </Card>
     </div>
   )
 }

@@ -12,7 +12,6 @@ import { useUIStore, useAuthStore } from '@/store'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import {
   Dialog,
   DialogContent,
@@ -74,7 +73,7 @@ export function Sidebar() {
           <div
             className={cn(
               'fixed left-0 top-0 h-[100dvh] w-60 z-50',
-              'sidebar-gradient border-r border-white/[0.06]',
+              'bg-card border-r border-border',
               'data-[state=open]:slide-in-from-left-0 data-[state=closed]:slide-out-to-left-0',
               'data-[state=open]:animate-in data-[state=closed]:animate-out',
               'data-[state=closed]:duration-200 data-[state=open]:duration-300',
@@ -87,14 +86,14 @@ export function Sidebar() {
               <div className="flex items-center justify-between px-4 py-5">
                 <div className="flex items-center gap-3 flex-1">
                   <div className="relative shrink-0">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                      <GraduationCap className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
+                      <GraduationCap className="w-4 h-4 text-primary-foreground" />
                     </div>
                     <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-background animate-pulse-slow" />
                   </div>
                   <div className="overflow-hidden">
-                    <span className="text-base font-bold gradient-text-study tracking-tight block">Mnemo</span>
-                    <span className="text-[10px] text-muted-foreground block -mt-0.5">AI Study Companion</span>
+                    <span className="text-base font-bold text-foreground tracking-tight block">Mnemo</span>
+                    <span className="text-xs text-muted-foreground block -mt-0.5">AI Study Companion</span>
                   </div>
                 </div>
                 <button
@@ -108,9 +107,9 @@ export function Sidebar() {
               <Separator />
 
               {/* AI Badge */}
-              <div className="mx-3 my-3 px-3 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                <span className="text-xs text-indigo-300 font-medium">AI Learning Mode Active</span>
+              <div className="mx-3 my-3 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span className="text-xs text-primary font-medium">AI Learning Mode Active</span>
               </div>
 
               {/* Nav */}
@@ -126,14 +125,14 @@ export function Sidebar() {
                         'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
                         'transition-all duration-200 group relative min-h-[44px]',
                         active
-                          ? 'active-nav-item text-indigo-300'
-                          : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
+                          ? 'active-nav-item text-primary'
+                          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                       )}
                     >
                       <Icon
                         className={cn(
                           'shrink-0 transition-colors',
-                          active ? 'text-indigo-400' : 'text-muted-foreground group-hover:text-foreground'
+                          active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
                         )}
                         size={18}
                       />
@@ -170,7 +169,6 @@ export function Sidebar() {
                     )}
                   </Button>
                 </div>
-                <ThemeToggle showLabel className="w-full justify-start" />
               </div>
             </div>
           </div>
@@ -202,7 +200,7 @@ export function Sidebar() {
             >
               {isSigningOut ? (
                 <>
-                  <span className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                  <span className="w-4 h-4 rounded-full border-2 border-destructive-foreground/30 border-t-destructive-foreground animate-spin" />
                   Signing out...
                 </>
               ) : (
@@ -220,7 +218,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'relative flex flex-col h-[100dvh] border-r border-white/[0.06] sidebar-gradient',
+        'relative flex flex-col h-[100dvh] border-r border-border bg-card',
         'transition-all duration-300 ease-in-out hidden lg:flex',
         sidebarOpen ? 'w-60' : 'w-[72px]'
       )}
@@ -228,15 +226,15 @@ export function Sidebar() {
       {/* Logo */}
       <div className={cn('flex items-center gap-3 px-4 py-5', !sidebarOpen && 'justify-center')}>
         <div className="relative shrink-0">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-            <GraduationCap className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
+            <GraduationCap className="w-4 h-4 text-primary-foreground" />
           </div>
           <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-background animate-pulse-slow" />
         </div>
         {sidebarOpen && (
           <div className="overflow-hidden">
-            <span className="text-base font-bold gradient-text-study tracking-tight block">Mnemo</span>
-            <span className="text-[10px] text-muted-foreground block -mt-0.5">AI Study Companion</span>
+            <span className="text-base font-bold text-foreground tracking-tight block">Mnemo</span>
+            <span className="text-xs text-muted-foreground block -mt-0.5">AI Study Companion</span>
           </div>
         )}
       </div>
@@ -245,9 +243,9 @@ export function Sidebar() {
 
       {/* AI Badge */}
       {sidebarOpen && (
-        <div className="mx-3 my-3 px-3 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-2">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-          <span className="text-xs text-indigo-300 font-medium">AI Learning Mode Active</span>
+        <div className="mx-3 my-3 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+          <span className="text-xs text-primary font-medium">AI Learning Mode Active</span>
         </div>
       )}
 
@@ -263,20 +261,20 @@ export function Sidebar() {
                 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
                 'transition-all duration-200 group relative min-h-[44px]',
                 active
-                  ? 'active-nav-item text-indigo-300'
-                  : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
+                  ? 'active-nav-item text-primary'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
               )}
             >
               <Icon
                 className={cn(
                   'shrink-0 transition-colors',
-                  active ? 'text-indigo-400' : 'text-muted-foreground group-hover:text-foreground'
+                  active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
                 )}
                 size={18}
               />
               {sidebarOpen && <span className="truncate">{label}</span>}
               {!sidebarOpen && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-popover border border-white/10 rounded-md text-xs text-foreground whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-xl">
+                <div className="absolute left-full ml-2 px-2 py-1 bg-popover border border-border rounded-md text-xs text-foreground whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-xl">
                   {label}
                 </div>
               )}
@@ -314,14 +312,12 @@ export function Sidebar() {
                 )}
               </Button>
             </div>
-            <ThemeToggle showLabel className="w-full justify-start" />
           </>
         ) : (
           <>
             <Avatar className="w-8 h-8">
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <ThemeToggle />
             <Button
               variant="ghost"
               size="icon-sm"
@@ -344,10 +340,10 @@ export function Sidebar() {
         onClick={toggleSidebar}
         className={cn(
           'absolute -right-3 top-20 z-10',
-          'w-6 h-6 rounded-full glass border border-white/10',
+          'w-6 h-6 rounded-full bg-card border border-border',
           'flex items-center justify-center',
           'text-muted-foreground hover:text-foreground transition-colors',
-          'shadow-lg'
+          'shadow-sm'
         )}
       >
         {sidebarOpen ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
@@ -378,7 +374,7 @@ export function Sidebar() {
             >
               {isSigningOut ? (
                 <>
-                  <span className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                  <span className="w-4 h-4 rounded-full border-2 border-destructive-foreground/30 border-t-destructive-foreground animate-spin" />
                   Signing out...
                 </>
               ) : (

@@ -10,6 +10,7 @@ import type {
   Quiz,
   StudySession,
   StudyGoal,
+  MaterialStatus,
 } from '@/types'
 
 // ─── Date helpers ────────────────────────────────────────────────────────────
@@ -43,6 +44,15 @@ export const SUBJECT_META: Record<
   'economics':        { label: 'Economics',          color: '#84cc16', icon: 'TrendingUp',    bg: 'bg-lime-500/20'    },
   'philosophy':       { label: 'Philosophy',         color: '#a78bfa', icon: 'Lightbulb',     bg: 'bg-purple-500/20'  },
   'other':            { label: 'Other',              color: '#64748b', icon: 'MoreHorizontal', bg: 'bg-slate-500/20'  },
+}
+
+// ─── Status Meta ───────────────────────────────────────────────────────────────
+
+export const STATUS_CONFIG: Record<MaterialStatus, { label: string; color: string; bg: string }> = {
+  pending:    { label: 'Pending',    color: 'text-muted-foreground', bg: 'bg-muted/40'      },
+  summarized: { label: 'Summarized', color: 'text-amber-400',        bg: 'bg-amber-500/15'  },
+  reviewed:   { label: 'Reviewed',   color: 'text-indigo-400',       bg: 'bg-indigo-500/15' },
+  mastered:   { label: 'Mastered',   color: 'text-emerald-400',      bg: 'bg-emerald-500/15'},
 }
 
 // ─── Mock Subjects ─────────────────────────────────────────────────────────────

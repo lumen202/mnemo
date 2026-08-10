@@ -21,23 +21,23 @@ function relativeTime(iso: string): string {
 }
 
 const QUICK_ACTIONS = [
-  { icon: BookOpen,       label: 'Summarize material',  href: '/materials',  color: 'text-cyan-400',    bg: 'bg-cyan-500/15'    },
-  { icon: FlipHorizontal, label: 'Generate flashcards', href: '/flashcards', color: 'text-violet-400',  bg: 'bg-violet-500/15'  },
-  { icon: Target,         label: 'Create a quiz',       href: '/quizzes',    color: 'text-amber-400',   bg: 'bg-amber-500/15'   },
-  { icon: Flame,          label: 'View study plan',     href: '/planner',    color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+  { icon: BookOpen,       label: 'Summarize material',  href: '/materials'  },
+  { icon: FlipHorizontal, label: 'Generate flashcards', href: '/flashcards' },
+  { icon: Target,         label: 'Create a quiz',       href: '/quizzes'    },
+  { icon: Flame,          label: 'View study plan',     href: '/planner'    },
 ]
 
 const INSIGHT_ICONS = {
-  warning:     { icon: AlertTriangle, color: 'text-amber-400',   bg: 'bg-amber-500/15'   },
-  tip:         { icon: Sparkles,      color: 'text-indigo-400',  bg: 'bg-indigo-500/15'  },
-  achievement: { icon: Trophy,        color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
-  prediction:  { icon: TrendingUp,    color: 'text-rose-400',    bg: 'bg-rose-500/15'    },
+  warning:     { icon: AlertTriangle },
+  tip:         { icon: Sparkles      },
+  achievement: { icon: Trophy        },
+  prediction:  { icon: TrendingUp    },
 }
 
 function PanelSection({
   label,
   icon: Icon,
-  iconClass = 'text-indigo-400',
+  iconClass = 'text-muted-foreground',
   defaultOpen = true,
   children,
 }: {
@@ -49,10 +49,10 @@ function PanelSection({
 }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <section className="border-b border-white/[0.06] last:border-0">
+    <section className="border-b border-border last:border-0">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 w-full px-4 py-3 hover:bg-white/[0.03] transition-colors"
+        className="flex items-center gap-2 w-full px-4 py-3 hover:bg-accent transition-colors"
       >
         <Icon className={cn('w-3.5 h-3.5 shrink-0', iconClass)} />
         <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1 text-left">
@@ -83,7 +83,7 @@ export function TutorPanel() {
         {/* New chat button */}
         <button
           onClick={newSession}
-          className="flex items-center gap-2 w-full rounded-xl px-3 py-2 mb-2 border border-dashed border-indigo-500/30 hover:border-indigo-500/60 hover:bg-indigo-500/5 transition-all text-indigo-400 hover:text-indigo-300"
+          className="flex items-center gap-2 w-full rounded-xl px-3 py-2 mb-2 border border-dashed border-border hover:border-foreground/30 hover:bg-accent transition-all text-muted-foreground hover:text-foreground"
         >
           <Plus size={13} />
           <span className="text-xs font-medium">New Chat</span>
@@ -100,21 +100,21 @@ export function TutorPanel() {
                 className={cn(
                   'group flex items-center gap-2 rounded-xl px-2.5 py-2 cursor-pointer transition-all border',
                   active
-                    ? 'bg-indigo-500/10 border-indigo-500/25'
-                    : 'border-transparent hover:bg-white/[0.04] hover:border-white/[0.06]'
+                    ? 'bg-accent border-border'
+                    : 'border-transparent hover:bg-accent hover:border-border'
                 )}
                 onClick={() => switchSession(session.id)}
               >
                 {session.unread && !active && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" title="New reply" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-foreground shrink-0" title="New reply" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className={cn('text-xs font-medium truncate', active ? 'text-indigo-300' : 'text-foreground')}>
+                  <p className={cn('text-xs font-medium truncate', active ? 'text-foreground' : 'text-foreground')}>
                     {session.title}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1" suppressHydrationWarning>
+                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1" suppressHydrationWarning>
                     {isGenerating ? (
-                      <span className="text-indigo-400">Generating…</span>
+                      <span className="text-foreground">Generating…</span>
                     ) : (
                       <>{session.messages.length} msg{session.messages.length !== 1 ? 's' : ''} · {relativeTime(session.createdAt)}</>
                     )}
@@ -135,16 +135,16 @@ export function TutorPanel() {
       </PanelSection>
 
       {/* Quick actions */}
-      <PanelSection label="Quick Actions" icon={Target} iconClass="text-amber-400">
+      <PanelSection label="Quick Actions" icon={Target}>
         <div className="space-y-1.5">
-          {QUICK_ACTIONS.map(({ icon: Icon, label, href, color, bg }) => (
+          {QUICK_ACTIONS.map(({ icon: Icon, label, href }) => (
             <Link
               key={label}
               href={href}
-              className="flex items-center gap-2.5 rounded-xl p-2.5 border border-white/[0.06] hover:border-white/[0.12] transition-all glass-hover"
+              className="flex items-center gap-2.5 rounded-xl p-2.5 border border-border hover:bg-accent transition-all"
             >
-              <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center shrink-0', bg)}>
-                <Icon size={13} className={color} />
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-muted">
+                <Icon size={13} className="text-muted-foreground" />
               </div>
               <span className="text-xs text-muted-foreground">{label}</span>
             </Link>
@@ -155,7 +155,7 @@ export function TutorPanel() {
       {/* Active insights */}
       <PanelSection label="Insights" icon={Sparkles}>
         {insights.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             Log some study sessions and upload materials — insights show up here once there's enough activity to learn from.
           </p>
         ) : (
@@ -164,12 +164,12 @@ export function TutorPanel() {
               const cfg = INSIGHT_ICONS[insight.type]
               const Icon = cfg.icon
               return (
-                <div key={insight.id} className={cn('rounded-xl p-3 border border-white/[0.06]', cfg.bg)}>
+                <div key={insight.id} className="rounded-xl p-3 border border-border bg-muted">
                   <div className="flex items-start gap-2">
-                    <Icon size={12} className={cn('shrink-0 mt-0.5', cfg.color)} />
+                    <Icon size={12} className="shrink-0 mt-0.5 text-muted-foreground" />
                     <div className="min-w-0">
-                      <p className="text-[11px] font-semibold text-foreground leading-tight mb-0.5">{insight.title}</p>
-                      <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-2">{insight.description}</p>
+                      <p className="text-xs font-semibold text-foreground leading-tight mb-0.5">{insight.title}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{insight.description}</p>
                     </div>
                   </div>
                 </div>
@@ -190,16 +190,16 @@ export function TutorPanel() {
             { icon: MessageSquare, desc: 'Stats & facts answered instantly — streaks, due cards, and Wikipedia lookups skip the AI entirely' },
           ].map(({ icon: Icon, desc }) => (
             <div key={desc} className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-lg bg-indigo-500/15 flex items-center justify-center shrink-0">
-                <Icon size={11} className="text-indigo-400" />
+              <div className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <Icon size={11} className="text-muted-foreground" />
               </div>
-              <p className="text-[11px] text-muted-foreground">{desc}</p>
+              <p className="text-xs text-muted-foreground">{desc}</p>
             </div>
           ))}
         </div>
-        <div className="p-2.5 rounded-xl bg-indigo-500/5 border border-indigo-500/20">
-          <p className="text-[10px] text-muted-foreground leading-relaxed">
-            <span className="text-indigo-300 font-medium">Note:</span> Always verify AI-generated content with authoritative sources.
+        <div className="p-2.5 rounded-xl bg-muted border border-border">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            <span className="text-foreground font-medium">Note:</span> Always verify AI-generated content with authoritative sources.
           </p>
         </div>
       </PanelSection>

@@ -17,8 +17,11 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: [
-          'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont',
-          '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif',
+          'var(--font-sans)', 'ui-sans-serif', 'system-ui', '-apple-system',
+          'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Arial', 'sans-serif',
+        ],
+        serif: [
+          'var(--font-serif)', 'ui-serif', 'Georgia', 'serif',
         ],
       },
       colors: {
@@ -78,17 +81,9 @@ const config: Config = {
           from: { opacity: '0', transform: 'scale(0.95)' },
           to: { opacity: '1', transform: 'scale(1)' },
         },
-        shimmer: {
-          '0%': { transform: 'translateX(-100%)' },
-          '100%': { transform: 'translateX(100%)' },
-        },
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-8px)' },
-        },
-        'gradient-shift': {
-          '0%, 100%': { backgroundPosition: '0% 50%' },
-          '50%': { backgroundPosition: '100% 50%' },
         },
         pulse: {
           '0%, 100%': { opacity: '1' },
@@ -101,13 +96,8 @@ const config: Config = {
         'fade-in': 'fade-in 0.5s ease-out forwards',
         'slide-in-left': 'slide-in-left 0.5s ease-out forwards',
         'scale-in': 'scale-in 0.3s ease-out forwards',
-        shimmer: 'shimmer 2s infinite',
         float: 'float 3s ease-in-out infinite',
-        'gradient-shift': 'gradient-shift 4s ease infinite',
         'pulse-slow': 'pulse 3s ease-in-out infinite',
-      },
-      backgroundSize: {
-        '300%': '300%',
       },
     },
   },

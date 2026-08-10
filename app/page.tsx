@@ -8,6 +8,7 @@ import {
   Boxes, Sigma, Network, Github,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 const FEATURES = [
@@ -128,12 +129,12 @@ function LandingNav() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-6 lg:px-12 py-4 glass border-b border-white/[0.06]">
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-6 lg:px-12 py-4 bg-background/95 backdrop-blur-sm border-b border-border">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-            <GraduationCap className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
+            <GraduationCap className="w-4 h-4 text-primary-foreground" />
           </div>
-          <span className="font-bold gradient-text-study text-lg tracking-tight">Mnemo</span>
+          <span className="font-bold text-foreground text-lg tracking-tight">Mnemo</span>
         </Link>
         <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground flex-1 px-8">
           <Link href="#features" className="hover:text-foreground transition-colors">Features</Link>
@@ -203,7 +204,7 @@ function LandingNav() {
               <Github size={16} />
               Source
             </a>
-            <div className="border-t border-white/[0.06] mt-2 pt-4 flex flex-col gap-2">
+            <div className="border-t border-border mt-2 pt-4 flex flex-col gap-2">
               <Button variant="outline" asChild className="w-full min-h-[44px]">
                 <Link href="/auth/login">Sign In</Link>
               </Button>
@@ -227,22 +228,18 @@ export default function LandingPage() {
 
 
       {/* Hero */}
-      <section className="hero-gradient pt-28 pb-16 sm:pt-32 sm:pb-20 px-4 sm:px-6 lg:px-12 relative overflow-hidden">
-        {/* Ambient orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-indigo-500/10 blur-[100px] pointer-events-none" />
-        <div className="absolute top-1/3 right-1/4 w-64 h-64 rounded-full bg-cyan-500/8 blur-[80px] pointer-events-none" />
-
+      <section className="pt-28 pb-16 sm:pt-32 sm:pb-20 px-4 sm:px-6 lg:px-12 relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/25 rounded-full px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-indigo-300 mb-6 sm:mb-8">
-            <Sparkles size={14} className="text-indigo-400 shrink-0" />
+          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-primary mb-6 sm:mb-8">
+            <Sparkles size={14} className="text-primary shrink-0" />
             <span className="truncate">AI-powered learning for students</span>
           </div>
 
           <div className="text-center">
             <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold tracking-tight leading-tight mb-4 sm:mb-6">
               Study smarter,{' '}
-              <span className="gradient-text-study block sm:inline">learn faster.</span>
+              <span className="text-foreground block sm:inline">learn faster.</span>
             </h1>
 
             <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-4 sm:px-0">
@@ -275,53 +272,53 @@ export default function LandingPage() {
             {/* Dashboard preview */}
             <div className="relative mx-auto max-w-4xl px-4 sm:px-0">
               <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10 pointer-events-none rounded-2xl" />
-              <div className="glass border border-white/10 rounded-2xl p-4 sm:p-6 shadow-2xl shadow-black/50">
+              <Card className="p-4 sm:p-6">
                 {/* Stats row */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
                   {[
                     { label: 'Study Streak',      value: '7 days 🔥', color: 'text-amber-400',  bg: 'bg-amber-500/15'  },
-                    { label: 'Hours This Month',  value: '80.5h',     color: 'text-indigo-400', bg: 'bg-indigo-500/15' },
+                    { label: 'Hours This Month',  value: '80.5h',     color: 'text-primary',    bg: 'bg-primary/15' },
                     { label: 'Materials',         value: '9/12',      color: 'text-cyan-400',   bg: 'bg-cyan-500/15'   },
                     { label: 'Learning Score',    value: '81/100',    color: 'text-violet-400', bg: 'bg-violet-500/15' },
                   ].map((stat) => (
-                    <div key={stat.label} className={`rounded-xl p-2.5 sm:p-3 ${stat.bg} border border-white/10`}>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{stat.label}</p>
+                    <div key={stat.label} className={`rounded-xl p-2.5 sm:p-3 ${stat.bg} border border-border`}>
+                      <p className="text-xs text-muted-foreground truncate">{stat.label}</p>
                       <p className={`text-xs sm:text-sm font-bold tabular-nums mt-0.5 ${stat.color} truncate`}>{stat.value}</p>
                     </div>
                   ))}
                 </div>
                 {/* Fake activity chart */}
-                <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 sm:p-4 mb-3">
+                <div className="rounded-xl bg-muted border border-border p-3 sm:p-4 mb-3">
                   <p className="text-xs text-muted-foreground mb-3">Study Activity — 6 weeks</p>
                   <div className="flex items-end gap-1.5 sm:gap-2 h-16">
                     {[40, 55, 45, 70, 65, 80].map((h, i) => (
                       <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                        <div className="w-full rounded-t-sm bg-indigo-500/50" style={{ height: `${h}%` }} />
+                        <div className="w-full rounded-t-sm bg-primary/50" style={{ height: `${h}%` }} />
                         <div className="w-full rounded-t-sm bg-emerald-500/30" style={{ height: `${h * 0.4}%` }} />
                       </div>
                     ))}
                   </div>
                 </div>
                 {/* Fake AI insight */}
-                <div className="rounded-xl bg-indigo-500/10 border border-indigo-500/20 p-3 flex items-start gap-2">
-                  <Brain size={14} className="text-indigo-400 shrink-0 mt-0.5 flex-shrink-0" />
+                <div className="rounded-xl bg-primary/10 border border-primary/20 p-3 flex items-start gap-2">
+                  <Brain size={14} className="text-primary shrink-0 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-foreground">AI Insight: Machine Learning mastery within reach</p>
                     <p className="text-xs text-muted-foreground mt-0.5">You&apos;re 93% through ML materials. 3 more sessions to complete.</p>
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
         </div>
       </section>
 
       {/* Stats */}
-      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-12 border-y border-white/[0.05]">
+      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-12 border-y border-border">
         <div className="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
           {STATS.map((stat) => (
             <div key={stat.label} className="text-center">
-              <p className="text-2xl sm:text-3xl font-bold gradient-text-study tabular-nums">{stat.value}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums">{stat.value}</p>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">{stat.label}</p>
             </div>
           ))}
@@ -329,13 +326,13 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-12 mesh-gradient">
+      <section id="features" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-12">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12 sm:mb-16">
-            <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-3">Features</p>
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">Features</p>
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
               Everything you need to{' '}
-              <span className="gradient-text-study block sm:inline">master any subject.</span>
+              <span className="text-foreground block sm:inline">master any subject.</span>
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto px-4 sm:px-0">
               Powered by AI — built for how students actually learn.
@@ -346,16 +343,16 @@ export default function LandingPage() {
             {FEATURES.map((feature) => {
               const Icon = feature.icon
               return (
-                <div
+                <Card
                   key={feature.title}
-                  className={`glass border rounded-2xl p-6 card-shine glass-hover ${feature.border} min-h-[44px]`}
+                  className={`p-6 hover:bg-accent transition-colors ${feature.border} min-h-[44px]`}
                 >
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${feature.bg}`}>
                     <Icon className={`w-5 h-5 ${feature.color}`} />
                   </div>
                   <h3 className="text-base font-semibold text-foreground mb-2">{feature.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
-                </div>
+                </Card>
               )
             })}
           </div>
@@ -363,16 +360,16 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-12 border-t border-white/[0.05]">
+      <section id="how-it-works" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-12 border-t border-border">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 sm:mb-16">
-            <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-3">How it works</p>
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">How it works</p>
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground">From upload to insight in minutes</h2>
           </div>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
             {HOW_IT_WORKS.map((item) => (
               <div key={item.step} className="relative">
-                <p className="text-5xl font-bold text-white/5 mb-3 tabular-nums">{item.step}</p>
+                <p className="text-5xl font-bold text-muted-foreground/15 mb-3 tabular-nums">{item.step}</p>
                 <h3 className="text-base font-semibold text-foreground mb-2">{item.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
               </div>
@@ -382,13 +379,13 @@ export default function LandingPage() {
       </section>
 
       {/* How it's built */}
-      <section id="how-its-built" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-12 bg-white/[0.01] border-t border-white/[0.05]">
+      <section id="how-its-built" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-12 bg-muted/30 border-t border-border">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12 sm:mb-16">
-            <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-3">How it&apos;s built</p>
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">How it&apos;s built</p>
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
               Three decisions that shaped{' '}
-              <span className="gradient-text-study block sm:inline">the codebase.</span>
+              <span className="text-foreground block sm:inline">the codebase.</span>
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto px-4 sm:px-0">
               Mnemo is a solo-built portfolio project. The source is public — here is what is worth reading.
@@ -399,16 +396,16 @@ export default function LandingPage() {
             {BUILD_NOTES.map((note) => {
               const Icon = note.icon
               return (
-                <div
+                <Card
                   key={note.title}
-                  className={`glass border rounded-2xl p-6 card-shine glass-hover ${note.border}`}
+                  className={`p-6 hover:bg-accent transition-colors ${note.border}`}
                 >
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${note.bg}`}>
                     <Icon className={`w-5 h-5 ${note.color}`} />
                   </div>
                   <h3 className="text-base font-semibold text-foreground mb-2">{note.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{note.description}</p>
-                </div>
+                </Card>
               )
             })}
           </div>
@@ -418,7 +415,7 @@ export default function LandingPage() {
             {TECH_STACK.map((tech) => (
               <span
                 key={tech}
-                className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground"
+                className="rounded-full border border-border bg-muted px-3 py-1.5 text-xs text-muted-foreground"
               >
                 {tech}
               </span>
@@ -437,10 +434,10 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-12 border-t border-white/[0.05]">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-12 border-t border-border">
         <div className="max-w-2xl mx-auto text-center">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-500/30 animate-float">
-            <Zap className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-6">
+            <Zap className="w-7 h-7 text-primary-foreground" />
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
             Ready to transform<br />how you study?
@@ -463,15 +460,15 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.06] py-8 px-4 sm:px-6 lg:px-12">
+      <footer className="border-t border-border py-8 px-4 sm:px-6 lg:px-12">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shrink-0">
-              <GraduationCap className="w-3 h-3 text-white" />
+            <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center shrink-0">
+              <GraduationCap className="w-3 h-3 text-primary-foreground" />
             </div>
-            <span className="text-sm font-semibold gradient-text-study">Mnemo</span>
+            <span className="text-sm font-semibold text-foreground">Mnemo</span>
           </div>
-          <p className="text-xs text-muted-foreground text-center sm:text-left">© 2026 Mnemo. Portfolio prototype — AI-powered learning platform.</p>
+          <p className="text-xs text-muted-foreground text-center sm:text-left">© 2026 Mnemo. A solo-built portfolio project — AI-powered learning platform.</p>
           <div className="flex gap-4 sm:gap-6 text-xs text-muted-foreground">
             <a
               href={GITHUB_URL}

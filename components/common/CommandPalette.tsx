@@ -101,7 +101,7 @@ export function CommandPalette() {
       <DialogContent className="max-w-lg p-0 overflow-hidden top-[20%] translate-y-0">
         <DialogTitle className="sr-only">Command palette</DialogTitle>
 
-        <div className="flex items-center gap-2.5 px-4 h-12 border-b border-white/[0.07]">
+        <div className="flex items-center gap-2.5 px-4 h-12 border-b border-border">
           <Search size={15} className="text-muted-foreground shrink-0" />
           <input
             autoFocus
@@ -111,7 +111,7 @@ export function CommandPalette() {
             placeholder="Search pages and actions..."
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
           />
-          <kbd className="text-[10px] text-muted-foreground border border-white/[0.10] rounded px-1.5 py-0.5">esc</kbd>
+          <kbd className="text-xs text-muted-foreground border border-border rounded px-1.5 py-0.5">esc</kbd>
         </div>
 
         <div ref={listRef} className="max-h-[340px] overflow-y-auto py-2">
@@ -121,7 +121,7 @@ export function CommandPalette() {
 
           {groups.map(({ group, items }) => (
             <div key={group} className="px-2 pb-1">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold px-2 py-1.5">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground/70 font-semibold px-2 py-1.5">
                 {group}
               </p>
               {items.map((cmd) => {
@@ -135,12 +135,12 @@ export function CommandPalette() {
                     onMouseEnter={() => setActiveIndex(flatIndex)}
                     className={cn(
                       'w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-left transition-colors',
-                      isActive ? 'bg-indigo-500/15' : 'hover:bg-white/[0.04]'
+                      isActive ? 'bg-accent' : 'hover:bg-accent'
                     )}
                   >
-                    <Icon size={15} className={isActive ? 'text-indigo-400' : 'text-muted-foreground'} />
+                    <Icon size={15} className={isActive ? 'text-foreground' : 'text-muted-foreground'} />
                     <span className="text-sm text-foreground flex-1 min-w-0 truncate">{cmd.label}</span>
-                    <span className="text-[11px] text-muted-foreground truncate max-w-[45%]">{cmd.hint}</span>
+                    <span className="text-xs text-muted-foreground truncate max-w-[45%]">{cmd.hint}</span>
                     {isActive && <CornerDownLeft size={12} className="text-muted-foreground shrink-0" />}
                   </button>
                 )

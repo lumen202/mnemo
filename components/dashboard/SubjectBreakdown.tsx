@@ -1,5 +1,5 @@
 'use client'
-import { GlassCard } from '@/components/common/GlassCard'
+import { Card } from '@/components/ui/card'
 import { CategoryPieChart } from '@/components/charts/CategoryPieChart'
 import { useStudyMaterialStore, useStudySessionStore, useSubjectStore } from '@/store'
 import { computeStudyAnalytics } from '@/utils/analytics'
@@ -25,7 +25,7 @@ export function SubjectBreakdown() {
   const month = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   return (
-    <GlassCard className="p-4 sm:p-6">
+    <Card className="p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 gap-2 sm:gap-0">
         <h3 className="text-sm font-semibold text-foreground">Subject Breakdown</h3>
         <span className="text-xs text-muted-foreground">{month}</span>
@@ -51,6 +51,6 @@ export function SubjectBreakdown() {
           </div>
         ))}
       </div>
-    </GlassCard>
+    </Card>
   )
 }

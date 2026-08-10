@@ -13,13 +13,13 @@ function escHtml(s: string): string {
 
 function inlineFormat(text: string): string {
   return escHtml(text)
-    .replace(/`([^`]+)`/g, '<code class="bg-white/10 rounded px-1 py-0.5 text-xs font-mono text-indigo-300">$1</code>')
+    .replace(/`([^`]+)`/g, '<code class="bg-muted rounded px-1 py-0.5 text-xs font-mono text-foreground">$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
-    .replace(/\*([^*]+)\*/g, '<em class="text-foreground/80">$1</em>')
+    .replace(/\*([^*]+)\*/g, '<em class="text-muted-foreground">$1</em>')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, linkText, href) => {
       const safe = href.startsWith('/') || href.startsWith('https://')
       if (!safe) return `[${linkText}](${href})`
-      return `<a href="${href}" class="inline-flex items-center gap-1 font-semibold text-indigo-400 bg-indigo-500/15 border border-indigo-500/30 rounded-lg px-2.5 py-1 text-xs hover:bg-indigo-500/25 hover:text-indigo-300 transition-colors">${linkText}</a>`
+      return `<a href="${href}" class="inline-flex items-center gap-1 font-semibold text-foreground bg-accent border border-border rounded-lg px-2.5 py-1 text-xs hover:bg-accent/80 transition-colors">${linkText}</a>`
     })
 }
 
@@ -31,7 +31,7 @@ function renderMarkdown(text: string): string {
 
   const flushCode = () => {
     result.push(
-      `<pre class="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 my-2 overflow-x-auto text-xs font-mono text-foreground/80 whitespace-pre">${escHtml(codeLines.join('\n'))}</pre>`
+      `<pre class="bg-muted border border-border rounded-lg px-3 py-2.5 my-2 overflow-x-auto text-xs font-mono text-muted-foreground whitespace-pre">${escHtml(codeLines.join('\n'))}</pre>`
     )
     codeLines = []
   }
@@ -63,7 +63,7 @@ function renderMarkdown(text: string): string {
 
     // Horizontal rule
     if (/^---+$/.test(line.trim())) {
-      result.push('<hr class="border-white/10 my-3" />')
+      result.push('<hr class="border-border my-3" />')
       continue
     }
 
@@ -78,7 +78,7 @@ function renderMarkdown(text: string): string {
     // Blockquote
     const bqMatch = line.match(/^> (.+)/)
     if (bqMatch) {
-      result.push(`<blockquote class="border-l-2 border-indigo-500/40 pl-3 text-foreground/70 italic text-sm my-1">${inlineFormat(bqMatch[1])}</blockquote>`)
+      result.push(`<blockquote class="border-l-2 border-border pl-3 text-muted-foreground italic text-sm my-1">${inlineFormat(bqMatch[1])}</blockquote>`)
       continue
     }
 
@@ -115,10 +115,10 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
     return (
       <div className="flex justify-end animate-fade-in">
         <div className="max-w-[78%]">
-          <div className="bg-indigo-500/20 border border-indigo-500/30 rounded-2xl rounded-tr-sm px-4 py-3">
+          <div className="bg-secondary border border-border rounded-2xl rounded-tr-sm px-4 py-3">
             <p className="text-sm text-foreground leading-relaxed">{message.content}</p>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-1 text-right" suppressHydrationWarning>
+          <p className="text-xs text-muted-foreground mt-1 text-right" suppressHydrationWarning>
             {formatRelativeTime(message.timestamp)}
           </p>
         </div>
@@ -130,26 +130,26 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
 
   return (
     <div className="flex items-start gap-3 animate-fade-in">
-      <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-indigo-500/40 to-violet-600/40 flex items-center justify-center shrink-0 border border-indigo-500/30 mt-0.5">
+      <div className="w-7 h-7 rounded-xl bg-accent flex items-center justify-center shrink-0 border border-border mt-0.5">
         <span className="text-xs">✦</span>
       </div>
       <div className="flex-1 max-w-[85%]">
-        <div className="glass border border-white/[0.07] rounded-2xl rounded-tl-sm px-4 py-3">
+        <div className="bg-card border border-border shadow-sm rounded-2xl rounded-tl-sm px-4 py-3">
           {isEmpty ? (
             <span className="inline-flex gap-1 items-center text-muted-foreground text-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce [animation-delay:0ms]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce [animation-delay:150ms]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce [animation-delay:300ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]" />
             </span>
           ) : (
             <div
-              className="text-sm text-foreground/90 leading-relaxed prose-invert"
+              className="text-sm text-foreground leading-relaxed"
               dangerouslySetInnerHTML={{ __html: renderMarkdown(message.content) }}
               onClick={handleContentClick}
             />
           )}
         </div>
-        <p className="text-[10px] text-muted-foreground mt-1" suppressHydrationWarning>
+        <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
           Mnemo · {formatRelativeTime(message.timestamp)}
         </p>
       </div>

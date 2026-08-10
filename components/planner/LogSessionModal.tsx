@@ -69,7 +69,7 @@ export function LogSessionModal() {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Clock size={16} className="text-indigo-400" />
+            <Clock size={16} className="text-primary" />
             Log a study session
           </DialogTitle>
           <DialogDescription>
@@ -79,7 +79,7 @@ export function LogSessionModal() {
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground">Subject</label>
+            <label className="text-xs font-medium text-muted-foreground">Subject</label>
             <Select value={subjectId} onValueChange={(v) => setSubjectId(v as SubjectId)}>
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue />
@@ -93,7 +93,7 @@ export function LogSessionModal() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground">How long?</label>
+            <label className="text-xs font-medium text-muted-foreground">How long?</label>
             <div className="flex flex-wrap gap-2">
               {DURATIONS.map((m) => (
                 <button
@@ -103,8 +103,8 @@ export function LogSessionModal() {
                   className={cn(
                     'text-xs px-3 py-1.5 rounded-lg border transition-all tabular-nums',
                     durationMinutes === m
-                      ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
-                      : 'border-white/[0.07] text-muted-foreground hover:border-white/20'
+                      ? 'bg-primary/20 border-primary/40 text-primary'
+                      : 'border-border text-muted-foreground hover:border-foreground/20'
                   )}
                 >
                   {m < 60 ? `${m}m` : `${m / 60}h`}
@@ -114,7 +114,7 @@ export function LogSessionModal() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground">Date</label>
+            <label className="text-xs font-medium text-muted-foreground">Date</label>
             <input
               type="date"
               value={date}
@@ -125,7 +125,7 @@ export function LogSessionModal() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground">Notes (optional)</label>
+            <label className="text-xs font-medium text-muted-foreground">Notes (optional)</label>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

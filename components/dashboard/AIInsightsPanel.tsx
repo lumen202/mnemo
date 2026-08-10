@@ -5,7 +5,7 @@ import {
   AlertTriangle, Lightbulb, Trophy, TrendingUp,
   ArrowRight, Sparkles, ChevronRight,
 } from 'lucide-react'
-import { GlassCard } from '@/components/common/GlassCard'
+import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useAIStore } from '@/store'
 import type { AIInsight } from '@/types'
@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils'
 
 const INSIGHT_CONFIG = {
   warning:     { icon: AlertTriangle, color: 'text-amber-400',  bg: 'bg-amber-500/15',  border: 'border-amber-500/25',  badge: 'warning'     as const },
-  tip:         { icon: Lightbulb,    color: 'text-indigo-400', bg: 'bg-indigo-500/15', border: 'border-indigo-500/25', badge: 'default'     as const },
+  tip:         { icon: Lightbulb,    color: 'text-sky-400',   bg: 'bg-sky-500/15',    border: 'border-sky-500/25',    badge: 'default'     as const },
   achievement: { icon: Trophy,       color: 'text-emerald-400', bg: 'bg-emerald-500/15', border: 'border-emerald-500/25', badge: 'success'   as const },
   prediction:  { icon: TrendingUp,   color: 'text-rose-400',   bg: 'bg-rose-500/15',   border: 'border-rose-500/25',   badge: 'destructive' as const },
 }
@@ -40,7 +40,7 @@ function InsightItem({ insight }: { insight: AIInsight }) {
           <div className="flex items-center gap-2 mb-1">
             <p className="text-xs font-semibold text-foreground leading-tight">{insight.title}</p>
             {insight.priority === 'high' && (
-              <Badge variant={config.badge} className="text-[10px] py-0 px-1.5 h-4">
+              <Badge variant={config.badge} className="text-xs py-0 px-1.5 h-4">
                 {insight.priority}
               </Badge>
             )}
@@ -49,7 +49,7 @@ function InsightItem({ insight }: { insight: AIInsight }) {
             {insight.description}
           </p>
           {expanded && insight.actionable && (
-            <div className="mt-2 pt-2 border-t border-white/10">
+            <div className="mt-2 pt-2 border-t border-border">
               <p className="text-xs font-medium text-foreground/80">
                 💡 {insight.actionable}
               </p>
@@ -72,20 +72,20 @@ export function LearningInsightsPanel() {
   })
 
   return (
-    <GlassCard className="p-6">
+    <Card className="p-6">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+          <div className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
           </div>
           <h3 className="text-sm font-semibold text-foreground">AI Insights</h3>
-          <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full font-medium">
+          <span className="text-xs bg-primary/15 text-primary px-2 py-0.5 rounded-full font-medium">
             {insights.length} new
           </span>
         </div>
         <Link
           href="/assistant"
-          className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium"
+          className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
         >
           Ask AI <ArrowRight size={12} />
         </Link>
@@ -96,6 +96,6 @@ export function LearningInsightsPanel() {
           <InsightItem key={insight.id} insight={insight} />
         ))}
       </div>
-    </GlassCard>
+    </Card>
   )
 }

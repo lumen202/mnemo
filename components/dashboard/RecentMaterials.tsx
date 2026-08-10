@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { ArrowRight, FileText, StickyNote, Video, Link2, BookMarked } from 'lucide-react'
-import { GlassCard } from '@/components/common/GlassCard'
+import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useStudyMaterialStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
@@ -29,7 +29,7 @@ export function RecentMaterials() {
   const recent = materials.slice(0, 6)
 
   return (
-    <GlassCard className="p-6">
+    <Card className="p-6">
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Recent Materials</h3>
@@ -37,7 +37,7 @@ export function RecentMaterials() {
         </div>
         <Link
           href="/materials"
-          className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium"
+          className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
         >
           View all <ArrowRight size={12} />
         </Link>
@@ -53,7 +53,7 @@ export function RecentMaterials() {
             <Link
               key={mat.id}
               href={`/materials/${mat.id}`}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-accent transition-colors group cursor-pointer"
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div
@@ -75,6 +75,6 @@ export function RecentMaterials() {
           )
         })}
       </div>
-    </GlassCard>
+    </Card>
   )
 }

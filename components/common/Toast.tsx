@@ -12,10 +12,10 @@ const ICONS = {
 }
 
 const STYLES = {
-  default: 'border-white/[0.08] text-foreground',
-  success: 'border-emerald-500/25 text-emerald-300',
-  error: 'border-rose-500/25 text-rose-300',
-  warning: 'border-amber-500/25 text-amber-300',
+  default: 'border-border text-foreground',
+  success: 'border-emerald-500/25 text-emerald-600 dark:text-emerald-400',
+  error: 'border-destructive/40 text-destructive',
+  warning: 'border-amber-500/25 text-amber-600 dark:text-amber-400',
 }
 
 function Toast({ toast }: { toast: ToastMessage }) {
@@ -25,7 +25,7 @@ function Toast({ toast }: { toast: ToastMessage }) {
   return (
     <div
       className={cn(
-        'glass rounded-xl border px-4 py-3 shadow-lg shadow-black/20 flex items-start gap-3 w-full sm:w-80 animate-in slide-in-from-bottom-2 fade-in duration-200',
+        'bg-popover rounded-xl border px-4 py-3 shadow-md flex items-start gap-3 w-full sm:w-80 animate-in slide-in-from-bottom-2 fade-in duration-200',
         STYLES[toast.variant]
       )}
     >

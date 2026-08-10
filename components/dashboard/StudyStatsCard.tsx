@@ -1,6 +1,6 @@
 'use client'
 import { Flame, Clock, BookOpen, Target, Trophy, Zap } from 'lucide-react'
-import { GlassCard } from '@/components/common/GlassCard'
+import { Card } from '@/components/ui/card'
 import { useStudyMaterialStore, useStudySessionStore, useSubjectStore } from '@/store'
 import { computeStudyAnalytics } from '@/utils/analytics'
 import { cn } from '@/lib/utils'
@@ -19,38 +19,38 @@ export function StudyStatsCard() {
       value: `${analytics.totalStudyHours}h`,
       sublabel: 'this month',
       icon: Clock,
-      color: 'text-indigo-400',
-      bg: 'bg-indigo-500/15',
-      border: 'border-indigo-500/20',
+      color: 'text-primary',
+      bg: 'bg-primary/15',
+      border: 'border-primary/20',
     },
     {
       label: 'Materials',
       value: `${analytics.completedMaterials}/${analytics.totalMaterials}`,
       sublabel: 'reviewed',
       icon: BookOpen,
-      color: 'text-cyan-400',
-      bg: 'bg-cyan-500/15',
-      border: 'border-cyan-500/20',
+      color: 'text-sky-400',
+      bg: 'bg-sky-500/15',
+      border: 'border-sky-500/20',
     },
     {
       label: 'Active Subjects',
       value: `${analytics.activeSubjects}`,
       sublabel: `of ${subjects.length} enrolled`,
       icon: Target,
-      color: 'text-violet-400',
-      bg: 'bg-violet-500/15',
-      border: 'border-violet-500/20',
+      color: 'text-amber-400',
+      bg: 'bg-amber-500/15',
+      border: 'border-amber-500/20',
     },
   ]
 
   return (
-    <GlassCard className="p-6 col-span-full" glow="indigo" shine>
+    <Card className="p-6 col-span-full">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">
             {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} · Study Overview
           </p>
-          <h2 className="text-3xl font-bold gradient-text-study tabular-nums">
+          <h2 className="text-3xl font-bold text-foreground tabular-nums">
             {analytics.totalStudyHours}h studied
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -98,6 +98,6 @@ export function StudyStatsCard() {
           </div>
         ))}
       </div>
-    </GlassCard>
+    </Card>
   )
 }

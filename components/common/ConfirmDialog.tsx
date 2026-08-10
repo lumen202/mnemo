@@ -41,7 +41,7 @@ export function ConfirmDialog({
           </Button>
           <Button
             size="sm"
-            className={cn(destructive && 'bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30')}
+            className={cn(destructive && 'bg-destructive text-destructive-foreground hover:bg-destructive/90')}
             onClick={() => {
               onConfirm()
               onOpenChange(false)

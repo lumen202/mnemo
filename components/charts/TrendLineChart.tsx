@@ -14,7 +14,7 @@ interface CustomTooltipProps {
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null
   return (
-    <div className="glass border border-white/10 rounded-xl p-3 shadow-2xl text-xs sm:text-sm">
+    <div className="bg-popover border border-border rounded-xl p-3 shadow-lg text-xs sm:text-sm">
       <p className="text-xs text-muted-foreground mb-2 font-medium">{label}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center gap-2 text-xs sm:text-sm">
@@ -56,15 +56,15 @@ export function TrendLineChart({ data = MOCK_WEEKLY_TREND, height = 220 }: Trend
               <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
           <XAxis
             dataKey="week"
-            tick={{ fontSize: isMobile ? 10 : 11, fill: 'rgba(148,163,184,0.8)' }}
+            tick={{ fontSize: isMobile ? 12 : 12, fill: 'hsl(var(--muted-foreground))' }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: isMobile ? 10 : 11, fill: 'rgba(148,163,184,0.8)' }}
+            tick={{ fontSize: isMobile ? 12 : 12, fill: 'hsl(var(--muted-foreground))' }}
             axisLine={false}
             tickLine={false}
             width={isMobile ? 25 : 30}

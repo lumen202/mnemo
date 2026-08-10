@@ -33,12 +33,12 @@ export function EmptyState({
     <div
       className={cn(
         'flex flex-col items-center justify-center text-center px-6 py-14 rounded-2xl',
-        'border border-dashed border-white/[0.10] bg-white/[0.015]',
+        'border border-dashed border-border bg-card',
         className
       )}
     >
-      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
-        <Icon className="w-5 h-5 text-indigo-400" />
+      <div className="w-12 h-12 rounded-2xl bg-accent border border-border flex items-center justify-center mb-4">
+        <Icon className="w-5 h-5 text-foreground" />
       </div>
       <h3 className="text-sm font-semibold text-foreground mb-1.5">{title}</h3>
       <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">{description}</p>

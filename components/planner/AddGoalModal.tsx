@@ -68,7 +68,7 @@ export function AddGoalModal() {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Target size={16} className="text-indigo-400" />
+            <Target size={16} className="text-primary" />
             New study goal
           </DialogTitle>
           <DialogDescription>
@@ -78,7 +78,7 @@ export function AddGoalModal() {
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground">Goal</label>
+            <label className="text-xs font-medium text-muted-foreground">Goal</label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -93,7 +93,7 @@ export function AddGoalModal() {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted-foreground">Subject</label>
+              <label className="text-xs font-medium text-muted-foreground">Subject</label>
               <Select value={subjectId} onValueChange={setSubjectId}>
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
@@ -108,7 +108,7 @@ export function AddGoalModal() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted-foreground">Target date</label>
+              <label className="text-xs font-medium text-muted-foreground">Target date</label>
               <input
                 type="date"
                 value={targetDate}
@@ -119,7 +119,7 @@ export function AddGoalModal() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground">Notes (optional)</label>
+            <label className="text-xs font-medium text-muted-foreground">Notes (optional)</label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}

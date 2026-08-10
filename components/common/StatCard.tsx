@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { Card } from '@/components/ui/card'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
 interface StatCardProps {
@@ -21,8 +22,8 @@ export function StatCard({
   trend,
   trendValue,
   icon,
-  iconBg = 'bg-indigo-500/20',
-  accentColor = 'text-indigo-400',
+  iconBg = 'bg-primary/15',
+  accentColor = 'text-primary',
   className,
   animate = true,
 }: StatCardProps) {
@@ -30,9 +31,9 @@ export function StatCard({
   const trendColor = trend === 'up' ? 'text-emerald-400' : trend === 'down' ? 'text-rose-400' : 'text-muted-foreground'
 
   return (
-    <div
+    <Card
       className={cn(
-        'rounded-2xl glass border border-white/[0.07] p-5 card-shine glass-hover',
+        'p-5 hover:border-foreground/20',
         animate && 'animate-fade-in',
         className
       )}
@@ -55,6 +56,6 @@ export function StatCard({
           <span>{trendValue}</span>
         </div>
       )}
-    </div>
+    </Card>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { Sparkles, FlipHorizontal, ChevronLeft, ChevronRight, RotateCcw, Check, X, Filter, Loader2, CalendarClock, Layers } from 'lucide-react'
-import { GlassCard } from '@/components/common/GlassCard'
+import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/common/EmptyState'
 import { SkeletonCard, SkeletonStats } from '@/components/common/Skeleton'
 import { Button } from '@/components/ui/button'
@@ -70,9 +70,9 @@ function FlashcardViewer({ cards, emptyLabel }: { cards: Flashcard[]; emptyLabel
           <span>{index + 1} / {cards.length}</span>
           <span>{known} known · {Object.values(results).filter((r) => r === 'unknown').length} to review</span>
         </div>
-        <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden">
+        <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-500 transition-all duration-300"
+            className="h-full rounded-full bg-primary transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -82,22 +82,22 @@ function FlashcardViewer({ cards, emptyLabel }: { cards: Flashcard[]; emptyLabel
       <div className="w-full max-w-2xl flashcard-flip cursor-pointer" onClick={() => setFlipped(!flipped)}>
         <div className={cn('flashcard-inner relative h-56', flipped && 'flipped')}>
           {/* Front */}
-          <div className="flashcard-face absolute inset-0 glass border border-white/[0.10] rounded-2xl p-8 flex flex-col items-center justify-center">
-            <div className={cn('text-[10px] uppercase tracking-widest font-semibold mb-4', diff.color)}>
+          <div className="flashcard-face absolute inset-0 bg-card border border-border rounded-2xl p-8 flex flex-col items-center justify-center">
+            <div className={cn('text-xs uppercase tracking-widest font-semibold mb-4', diff.color)}>
               {card.difficulty} · Click to reveal
             </div>
             <p className="text-lg font-semibold text-foreground text-center leading-relaxed">
               {card.front}
             </p>
             <div className="absolute bottom-4 right-4">
-              <Badge variant="outline" className={cn('text-[10px]', diff.color)}>
+              <Badge variant="outline" className={cn('text-xs', diff.color)}>
                 {SUBJECT_META[card.subjectId]?.label ?? card.subjectId}
               </Badge>
             </div>
           </div>
           {/* Back */}
-          <div className="flashcard-face flashcard-back absolute inset-0 bg-indigo-500/10 border border-indigo-500/25 rounded-2xl p-8 flex flex-col items-center justify-center">
-            <div className="text-[10px] text-indigo-400 uppercase tracking-widest font-semibold mb-4">Answer</div>
+          <div className="flashcard-face flashcard-back absolute inset-0 bg-primary/10 border border-primary/25 rounded-2xl p-8 flex flex-col items-center justify-center">
+            <div className="text-xs text-primary uppercase tracking-widest font-semibold mb-4">Answer</div>
             <p className="text-sm text-foreground text-center leading-relaxed whitespace-pre-line">
               {card.back}
             </p>
@@ -146,15 +146,15 @@ function FlashcardViewer({ cards, emptyLabel }: { cards: Flashcard[]; emptyLabel
       </div>
 
       {lastSchedule && (
-        <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 -mt-2">
-          <CalendarClock size={11} className="text-indigo-400" />
+        <p className="text-xs text-muted-foreground flex items-center gap-1.5 -mt-2">
+          <CalendarClock size={11} className="text-primary" />
           Scheduled for review {lastSchedule}
         </p>
       )}
 
       {isComplete && (
-        <GlassCard className="p-5 w-full max-w-2xl text-center bg-emerald-500/5 border border-emerald-500/20">
-          <p className="text-sm font-semibold text-emerald-400 mb-1">Session complete! 🎉</p>
+        <Card className="p-5 w-full max-w-2xl text-center bg-emerald-500/5 border border-emerald-500/20">
+          <p className="text-sm font-semibold text-emerald-400 mb-1">Session complete!</p>
           <p className="text-xs text-muted-foreground">
             You knew {known} of {cards.length} cards ({Math.round((known / cards.length) * 100)}%).
             {known < cards.length && ' Review the remaining cards again for better retention.'}
@@ -163,7 +163,7 @@ function FlashcardViewer({ cards, emptyLabel }: { cards: Flashcard[]; emptyLabel
             <RotateCcw size={13} />
             Review again
           </Button>
-        </GlassCard>
+        </Card>
       )}
     </div>
   )
@@ -244,10 +244,10 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
   }
 
   return (
-    <GlassCard className="p-5" glow="indigo">
+    <Card className="p-5">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
-          <Sparkles className="w-4 h-4 text-indigo-400" />
+        <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+          <Sparkles className="w-4 h-4 text-primary" />
         </div>
         <div>
           <h3 className="text-sm font-semibold text-foreground">AI Flashcard Generator</h3>
@@ -258,7 +258,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
       <div className="space-y-3">
         {materials.length > 0 && (
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground">From study material (optional)</label>
+            <label className="text-xs font-medium text-muted-foreground">From study material (optional)</label>
             <Select value={selectedMaterial?.id ?? '__none__'} onValueChange={pickMaterial}>
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="None — enter topic below" />
@@ -268,7 +268,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
                 {materials.map((m) => (
                   <SelectItem key={m.id} value={m.id}>
                     {m.title}
-                    <span className="ml-2 text-muted-foreground text-[10px]">{SUBJECT_META[m.subject]?.label}</span>
+                    <span className="ml-2 text-muted-foreground text-xs">{SUBJECT_META[m.subject]?.label}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -278,7 +278,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground">Subject</label>
+            <label className="text-xs font-medium text-muted-foreground">Subject</label>
             <Select value={subject} onValueChange={(v) => setSubject(v as SubjectId)}>
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue />
@@ -291,7 +291,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
             </Select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground">Number of cards</label>
+            <label className="text-xs font-medium text-muted-foreground">Number of cards</label>
             <Select
               value={String(count)}
               onValueChange={(v) => setCount(Number(v))}
@@ -309,7 +309,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-[11px] font-medium text-muted-foreground">
+          <label className="text-xs font-medium text-muted-foreground">
             {selectedMaterial ? 'Topic (from material)' : 'Topic / content to study'}
           </label>
           <Textarea
@@ -326,7 +326,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
             }}
           />
           {selectedMaterial && (
-            <p className="text-[11px] text-indigo-400/80">
+            <p className="text-xs text-primary/80">
               Using full content of &ldquo;{selectedMaterial.title}&rdquo; — edit above to override
             </p>
           )}
@@ -351,7 +351,7 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
           )}
         </div>
       </div>
-    </GlassCard>
+    </Card>
   )
 }
 
@@ -395,7 +395,7 @@ function DeckCard({ deck, onStudy }: { deck: Deck; onStudy: () => void }) {
   return (
     <button
       onClick={onStudy}
-      className="group text-left rounded-2xl glass border border-white/[0.07] p-4 transition-all hover:border-white/20 hover:-translate-y-0.5"
+      className="group text-left rounded-2xl bg-card border border-border p-4 transition-all hover:border-foreground/20 hover:-translate-y-0.5"
     >
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -407,17 +407,17 @@ function DeckCard({ deck, onStudy }: { deck: Deck; onStudy: () => void }) {
           </span>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{deck.label}</p>
-            <p className="text-[11px] text-muted-foreground">{deck.cards.length} cards</p>
+            <p className="text-xs text-muted-foreground">{deck.cards.length} cards</p>
           </div>
         </div>
         {deck.dueCount > 0 && (
-          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-amber-500/15 text-amber-400 shrink-0">
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-500/15 text-amber-400 shrink-0">
             {deck.dueCount} due
           </span>
         )}
       </div>
 
-      <div className="flex h-1 rounded-full overflow-hidden bg-white/[0.06] mb-3">
+      <div className="flex h-1 rounded-full overflow-hidden bg-muted mb-3">
         {mix.map(({ difficulty, count }) => (
           count > 0 && (
             <div
@@ -434,7 +434,7 @@ function DeckCard({ deck, onStudy }: { deck: Deck; onStudy: () => void }) {
         ))}
       </div>
 
-      <span className="text-[11px] font-medium text-indigo-400 flex items-center gap-1">
+      <span className="text-xs font-medium text-primary flex items-center gap-1">
         {deck.dueCount > 0 ? 'Study due cards' : 'Review deck'}
         <ChevronRight size={12} className="transition-transform group-hover:translate-x-0.5" />
       </span>
@@ -493,12 +493,12 @@ export default function FlashcardsPage() {
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Cards', value: flashcards.length, color: 'text-indigo-400', bg: 'bg-indigo-500/15' },
+          { label: 'Total Cards', value: flashcards.length, color: 'text-primary', bg: 'bg-primary/15' },
           { label: 'Due Today',   value: dueToday.length,   color: 'text-amber-400',  bg: 'bg-amber-500/15'  },
           { label: 'Scheduled',   value: scheduled,         color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
           { label: 'Decks',       value: decks.length,      color: 'text-cyan-400',   bg: 'bg-cyan-500/15'   },
         ].map(({ label, value, color, bg }) => (
-          <div key={label} className={cn('rounded-xl p-4 border border-white/[0.06]', bg)}>
+          <div key={label} className={cn('rounded-xl p-4 border border-border', bg)}>
             <p className="text-xs text-muted-foreground mb-1">{label}</p>
             <p className={cn('text-2xl font-bold tabular-nums', color)}>{value}</p>
           </div>
@@ -522,7 +522,7 @@ export default function FlashcardsPage() {
             <h2 className="text-sm font-semibold text-foreground">Your Decks</h2>
             <button
               onClick={() => openDeck('all')}
-              className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
+              className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
             >
               Study all {dueToday.length > 0 && `(${dueToday.length} due)`}
               <ChevronRight size={12} />
@@ -540,7 +540,7 @@ export default function FlashcardsPage() {
       {flashcards.length > 0 && activeDeck !== null && (
       <>
       {/* Deck header + filters */}
-      <GlassCard className="p-4">
+      <Card className="p-4">
         <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={() => setActiveDeck(null)}
@@ -557,7 +557,7 @@ export default function FlashcardsPage() {
               'text-xs px-3 py-1 rounded-full border transition-all flex items-center gap-1.5',
               dueOnly
                 ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
-                : 'border-white/[0.07] text-muted-foreground hover:border-white/20'
+                : 'border-border text-muted-foreground hover:border-foreground/20'
             )}
             title="Show only cards scheduled for review today"
           >
@@ -571,8 +571,8 @@ export default function FlashcardsPage() {
               className={cn(
                 'text-xs px-3 py-1 rounded-full border transition-all capitalize',
                 difficultyFilter === d
-                  ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
-                  : 'border-white/[0.07] text-muted-foreground hover:border-white/20'
+                  ? 'bg-primary/20 border-primary/40 text-primary'
+                  : 'border-border text-muted-foreground hover:border-foreground/20'
               )}
             >
               {d}
@@ -580,15 +580,15 @@ export default function FlashcardsPage() {
           ))}
           <span className="ml-auto text-xs text-muted-foreground">{filtered.length} cards</span>
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Flashcard viewer */}
-      <GlassCard className="p-6">
+      <Card className="p-6">
         <FlashcardViewer
           cards={filtered}
           emptyLabel={dueOnly ? 'Nothing due right now — every card is scheduled ahead.' : undefined}
         />
-      </GlassCard>
+      </Card>
 
       {/* Cards in this deck */}
       <div>
@@ -599,26 +599,26 @@ export default function FlashcardsPage() {
           {filtered.map((card) => {
             const diff = DIFFICULTY_CONFIG[card.difficulty]
             return (
-              <GlassCard key={card.id} className="p-4 glass-hover">
+              <Card key={card.id} className="p-4 hover:bg-accent transition-colors">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground mb-1">{card.front}</p>
                     <p className="text-xs text-muted-foreground line-clamp-1">{card.back}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium capitalize', diff.bg, diff.color)}>
+                    <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium capitalize', diff.bg, diff.color)}>
                       {card.difficulty}
                     </span>
                     {activeDeck === 'all' && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-muted-foreground">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-accent text-muted-foreground">
                         {SUBJECT_META[card.subjectId]?.label}
                       </span>
                     )}
-                    <span className="text-[10px] text-muted-foreground">{card.timesReviewed}× reviewed</span>
+                    <span className="text-xs text-muted-foreground">{card.timesReviewed}× reviewed</span>
                     <span
                       className={cn(
-                        'text-[10px] px-2 py-0.5 rounded-full font-medium',
-                        isDue(card) ? 'bg-amber-500/15 text-amber-400' : 'bg-white/5 text-muted-foreground'
+                        'text-xs px-2 py-0.5 rounded-full font-medium',
+                        isDue(card) ? 'bg-amber-500/15 text-amber-400' : 'bg-accent text-muted-foreground'
                       )}
                       title={card.nextReview ? `Next review ${card.nextReview}` : 'Never reviewed'}
                     >
@@ -626,7 +626,7 @@ export default function FlashcardsPage() {
                     </span>
                   </div>
                 </div>
-              </GlassCard>
+              </Card>
             )
           })}
         </div>

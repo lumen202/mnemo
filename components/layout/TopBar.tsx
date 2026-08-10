@@ -2,6 +2,7 @@
 import { usePathname } from 'next/navigation'
 import { Plus, Search, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useUIStore } from '@/store'
 
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
@@ -22,7 +23,7 @@ export function TopBar() {
   const page = PAGE_TITLES[pathname] ?? { title: 'Mnemo', subtitle: '' }
 
   return (
-    <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-white/[0.06] glass shrink-0">
+    <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-border bg-background shrink-0">
       <div className="flex items-center gap-4 min-w-0 flex-1">
         {isMobile && (
           <Button
@@ -45,12 +46,12 @@ export function TopBar() {
         {/* Desktop: a real search affordance that shows the shortcut. */}
         <button
           onClick={() => setCommandPaletteOpen(true)}
-          className="hidden md:flex items-center gap-2 h-9 pl-3 pr-2 rounded-lg border border-white/[0.07] bg-white/[0.02] text-muted-foreground hover:text-foreground hover:border-white/20 transition-colors"
+          className="hidden md:flex items-center gap-2 h-9 pl-3 pr-2 rounded-lg border border-border bg-muted text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
           title="Search pages and actions"
         >
           <Search size={15} />
           <span className="text-xs">Search</span>
-          <kbd className="text-[10px] border border-white/[0.10] rounded px-1.5 py-0.5 ml-2">⌘K</kbd>
+          <kbd className="text-xs border border-border rounded px-1.5 py-0.5 ml-2">⌘K</kbd>
         </button>
         <Button
           variant="ghost"
@@ -80,6 +81,7 @@ export function TopBar() {
             Upload Material
           </Button>
         )}
+        <ThemeToggle className="text-muted-foreground hover:text-foreground hover:bg-muted min-h-[44px] ml-1" />
       </div>
     </header>
   )

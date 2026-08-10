@@ -21,7 +21,7 @@ export function SubjectProgressBar({
   const status = rawStatus === 'ahead' ? 'safe' : rawStatus === 'on-track' ? 'safe' : 'warning'
 
   const trackColor = {
-    safe:    color ?? 'bg-indigo-500',
+    safe:    color ?? 'bg-primary',
     warning: 'bg-amber-500',
     danger:  'bg-rose-500',
   }[status]
@@ -34,7 +34,7 @@ export function SubjectProgressBar({
           <span>{Math.round(100 - pct)}% remaining</span>
         </div>
       )}
-      <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
         <div
           className={cn('h-full rounded-full transition-all duration-700 ease-out', trackColor)}
           style={{ width: `${pct}%` }}

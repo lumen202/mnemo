@@ -11,7 +11,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null
   const item = payload[0].payload
   return (
-    <div className="glass border border-white/10 rounded-xl p-3 shadow-2xl">
+    <div className="bg-popover border border-border rounded-xl p-3 shadow-lg">
       <p className="text-xs font-semibold text-foreground">{item.subjectName}</p>
       <p className="text-sm font-bold text-foreground mt-1">{item.hoursStudied}h studied</p>
       <p className="text-xs text-muted-foreground">{item.percentage.toFixed(1)}% of total time</p>

@@ -4,7 +4,7 @@ import {
   Brain, PanelRightOpen, PanelRightClose, ChevronRight, ChevronLeft,
   MessageSquare, Target, Sparkles, X,
 } from 'lucide-react'
-import { GlassCard } from '@/components/common/GlassCard'
+import { Card } from '@/components/ui/card'
 import { ChatInterface } from '@/components/ai/ChatInterface'
 import { TutorPanel } from '@/components/ai/TutorPanel'
 import { Button } from '@/components/ui/button'
@@ -38,10 +38,10 @@ export function AssistantLayout() {
   return (
     <div className="flex gap-4 h-[calc(100vh-8rem)]">
       {/* Chat */}
-      <GlassCard className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <div className="flex items-center gap-3 px-4 sm:px-6 py-4 border-b border-white/[0.06] shrink-0">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/40 to-cyan-500/40 flex items-center justify-center border border-indigo-500/30 shrink-0">
-            <Brain className="w-4 h-4 text-indigo-300" />
+      <Card className="flex-1 flex flex-col overflow-hidden min-w-0 p-0">
+        <div className="flex items-center gap-3 px-4 sm:px-6 py-4 border-b border-border shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-accent flex items-center justify-center border border-border shrink-0">
+            <Brain className="w-4 h-4 text-foreground" />
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-sm font-semibold text-foreground">Mnemo AI Tutor</h2>
@@ -63,12 +63,12 @@ export function AssistantLayout() {
         <div className="flex-1 overflow-hidden">
           <ChatInterface />
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Desktop panel — animates between w-72 (expanded) and w-12 (collapsed strip) */}
-      <GlassCard
+      <Card
         className={cn(
-          'hidden lg:flex flex-col overflow-hidden shrink-0',
+          'hidden lg:flex flex-col overflow-hidden shrink-0 p-0',
           'transition-all duration-300 ease-in-out',
           panelCollapsed ? 'w-12' : 'w-72'
         )}
@@ -79,7 +79,7 @@ export function AssistantLayout() {
             <button
               onClick={() => setPanelCollapsed(false)}
               title="Expand panel"
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/[0.05] transition-all"
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
             >
               <ChevronLeft size={14} />
             </button>
@@ -89,7 +89,7 @@ export function AssistantLayout() {
                 key={label}
                 onClick={() => setPanelCollapsed(false)}
                 title={label}
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/10 transition-all"
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
               >
                 <Icon size={15} />
               </button>
@@ -98,13 +98,13 @@ export function AssistantLayout() {
         ) : (
           /* Expanded: full panel */
           <>
-            <div className="px-4 py-3 border-b border-white/[0.06] shrink-0 flex items-center gap-2">
-              <Brain className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="px-4 py-3 border-b border-border shrink-0 flex items-center gap-2">
+              <Brain className="w-3.5 h-3.5 text-muted-foreground" />
               <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">Tutor Panel</h3>
               <button
                 onClick={() => setPanelCollapsed(true)}
                 title="Collapse panel"
-                className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-white/[0.05]"
+                className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-accent"
               >
                 <ChevronRight size={14} />
               </button>
@@ -114,21 +114,21 @@ export function AssistantLayout() {
             </div>
           </>
         )}
-      </GlassCard>
+      </Card>
 
       {/* Mobile bottom sheet */}
       {isMobile && sheetOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
             onClick={() => setSheetOpen(false)}
           />
-          <div className="fixed inset-x-0 bottom-0 z-50 max-h-[72vh] lg:hidden flex flex-col glass border-t border-white/[0.08] rounded-t-2xl overflow-hidden">
+          <div className="fixed inset-x-0 bottom-0 z-50 max-h-[72vh] lg:hidden flex flex-col bg-card border border-border border-t shadow-sm rounded-t-2xl overflow-hidden">
             <div className="flex justify-center pt-3 pb-1 shrink-0">
-              <div className="w-10 h-1 rounded-full bg-white/20" />
+              <div className="w-10 h-1 rounded-full bg-muted" />
             </div>
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.06] shrink-0">
-              <Brain className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border shrink-0">
+              <Brain className="w-3.5 h-3.5 text-muted-foreground" />
               <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">Tutor Panel</h3>
               <Button
                 variant="ghost"

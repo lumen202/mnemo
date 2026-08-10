@@ -6,14 +6,14 @@ import {
   Sparkles, Loader2, Download, ChevronDown, ChevronUp, Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { GlassCard } from '@/components/common/GlassCard'
+import { Card } from '@/components/ui/card'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useStudyMaterialStore } from '@/store'
 import { getMaterialContent } from '@/services/supabase/repository'
 import { isSupabaseConfigured } from '@/lib/env'
-import { SUBJECT_META } from '@/data/mockData'
+import { SUBJECT_META, STATUS_CONFIG } from '@/data/mockData'
 import { cn } from '@/lib/utils'
-import type { MaterialType, MaterialStatus, StudyMaterial } from '@/types'
+import type { MaterialType, StudyMaterial } from '@/types'
 
 const TYPE_ICONS: Record<MaterialType, typeof FileText> = {
   pdf:      FileText,
@@ -29,13 +29,6 @@ const TYPE_LABELS: Record<MaterialType, string> = {
   video:    'Video',
   link:     'Link',
   textbook: 'Textbook',
-}
-
-const STATUS_CONFIG: Record<MaterialStatus, { label: string; color: string; bg: string }> = {
-  pending:    { label: 'Pending',    color: 'text-muted-foreground', bg: 'bg-muted/40'      },
-  summarized: { label: 'Summarized', color: 'text-amber-400',        bg: 'bg-amber-500/15'  },
-  reviewed:   { label: 'Reviewed',   color: 'text-indigo-400',       bg: 'bg-indigo-500/15' },
-  mastered:   { label: 'Mastered',   color: 'text-emerald-400',      bg: 'bg-emerald-500/15'},
 }
 
 export default function MaterialDetailPage() {
@@ -122,7 +115,7 @@ export default function MaterialDetailPage() {
       </button>
 
       {/* Header card */}
-      <GlassCard className="p-6" glow="indigo">
+      <Card className="p-6">
         <div className="flex items-start gap-4">
           <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center shrink-0', meta?.bg ?? 'bg-slate-500/20')}>
             <IconComp size={22} style={{ color: meta?.color }} />
@@ -130,7 +123,7 @@ export default function MaterialDetailPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3 mb-2">
               <h1 className="text-lg font-semibold text-foreground leading-tight">{material.title}</h1>
-              <span className={cn('text-[11px] px-2.5 py-1 rounded-full font-medium shrink-0', status.bg, status.color)}>
+              <span className={cn('text-xs px-2.5 py-1 rounded-full font-medium shrink-0', status.bg, status.color)}>
                 {status.label}
               </span>
             </div>
@@ -156,7 +149,7 @@ export default function MaterialDetailPage() {
             {material.tags && material.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-3">
                 {material.tags.map((tag) => (
-                  <span key={tag} className="text-[10px] px-2 py-0.5 bg-white/5 border border-white/[0.06] rounded-full text-muted-foreground">
+                  <span key={tag} className="text-xs px-2 py-0.5 bg-accent border border-border rounded-full text-muted-foreground">
                     {tag}
                   </span>
                 ))}
@@ -166,7 +159,7 @@ export default function MaterialDetailPage() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 mt-5 pt-4 border-t border-white/[0.06]">
+        <div className="flex items-center gap-2 mt-5 pt-4 border-t border-border">
           {material.status === 'pending' && (
             <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={summarize} disabled={isSummarizing}>
               {isSummarizing ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
@@ -178,7 +171,7 @@ export default function MaterialDetailPage() {
               href={material.source}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium px-3 py-1.5 rounded-lg border border-indigo-500/20 hover:bg-indigo-500/10"
+              className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors font-medium px-3 py-1.5 rounded-lg border border-primary/20 hover:bg-primary/10"
             >
               <Download size={12} /> Download original
             </a>
@@ -193,36 +186,36 @@ export default function MaterialDetailPage() {
             Delete
           </Button>
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Summary */}
       {material.summary && (
-        <GlassCard className="p-6">
+        <Card className="p-6">
           <h2 className="text-sm font-semibold text-foreground mb-3">AI Summary</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">{material.summary}</p>
-        </GlassCard>
+        </Card>
       )}
 
       {/* Key Points */}
       {material.keyPoints && material.keyPoints.length > 0 && (
-        <GlassCard className="p-6">
+        <Card className="p-6">
           <h2 className="text-sm font-semibold text-foreground mb-4">Key Points</h2>
           <ul className="space-y-3">
             {material.keyPoints.map((kp, i) => (
               <li key={i} className="flex items-start gap-3">
-                <span className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 text-[10px] flex items-center justify-center shrink-0 mt-0.5 font-semibold">
+                <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center shrink-0 mt-0.5 font-semibold">
                   {i + 1}
                 </span>
                 <p className="text-sm text-muted-foreground leading-relaxed">{kp}</p>
               </li>
             ))}
           </ul>
-        </GlassCard>
+        </Card>
       )}
 
       {/* Content */}
       {(content || contentLoading) && (
-        <GlassCard className="p-6">
+        <Card className="p-6">
           <button
             onClick={() => setShowContent(!showContent)}
             className="flex items-center justify-between w-full mb-4"
@@ -241,15 +234,15 @@ export default function MaterialDetailPage() {
               </div>
             )
           )}
-        </GlassCard>
+        </Card>
       )}
 
       {/* Description fallback (when no content/summary yet) */}
       {!content && !contentLoading && !material.summary && material.description && (
-        <GlassCard className="p-6">
+        <Card className="p-6">
           <h2 className="text-sm font-semibold text-foreground mb-3">Description</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">{material.description}</p>
-        </GlassCard>
+        </Card>
       )}
     </div>
     <ConfirmDialog

@@ -486,9 +486,9 @@ export function ChatInterface() {
                 key={q}
                 onClick={() => sendMessage(q)}
                 className={cn(
-                  'text-xs glass border border-white/[0.07] rounded-full px-3 py-1.5',
-                  'text-muted-foreground hover:text-foreground hover:border-indigo-500/40 transition-all duration-200',
-                  'hover:bg-indigo-500/10'
+                  'text-xs bg-card border border-border shadow-sm rounded-full px-3 py-1.5',
+                  'text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all duration-200',
+                  'hover:bg-accent'
                 )}
               >
                 {q}
@@ -499,9 +499,9 @@ export function ChatInterface() {
       )}
 
       {/* Input */}
-      <div className="p-4 border-t border-white/[0.06]">
+      <div className="p-4 border-t border-border">
         <div className="max-w-3xl mx-auto">
-          <div className="flex gap-2 items-end glass border border-white/[0.07] rounded-2xl p-2">
+          <div className="flex gap-2 items-end bg-card border border-border shadow-sm rounded-2xl p-2">
             <Textarea
               ref={textareaRef}
               value={input}
@@ -532,8 +532,8 @@ export function ChatInterface() {
               </Button>
             </div>
           </div>
-          <p className="text-[10px] text-muted-foreground text-center mt-2 flex items-center justify-center gap-1">
-            <Sparkles size={10} className="text-indigo-400" />
+          <p className="text-xs text-muted-foreground text-center mt-2 flex items-center justify-center gap-1">
+            <Sparkles size={12} className="text-muted-foreground" />
             Powered by AI · Personalized to your study context
           </p>
         </div>

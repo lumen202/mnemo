@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { GraduationCap, Eye, EyeOff, ArrowRight, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/store'
@@ -42,21 +43,19 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen hero-gradient flex items-center justify-center p-4 sm:p-6">
-      <div className="absolute top-1/4 right-1/3 w-96 h-96 rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none" />
-
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center relative">
         {/* Left — Pitch */}
         <div className="hidden md:block">
           <Link href="/" className="inline-flex items-center gap-2.5 mb-6 sm:mb-8">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
-              <GraduationCap className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shrink-0">
+              <GraduationCap className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold gradient-text-study">Mnemo</span>
+            <span className="text-xl font-bold text-foreground">Mnemo</span>
           </Link>
           <h2 className="text-3xl font-bold text-foreground mb-4 leading-tight">
             Your AI study companion,{' '}
-            <span className="gradient-text-study">starting now.</span>
+            <span className="text-foreground">starting now.</span>
           </h2>
           <p className="text-muted-foreground mb-8 leading-relaxed">
             Upload your first material, get an AI summary, generate flashcards, and take a quiz — all in under 5 minutes.
@@ -75,14 +74,14 @@ export default function SignupPage() {
         <div>
           <div className="text-center mb-4 sm:mb-6 md:hidden">
             <Link href="/" className="inline-flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shrink-0">
-                <GraduationCap className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shrink-0">
+                <GraduationCap className="w-4 h-4 text-primary-foreground" />
               </div>
-              <span className="font-bold gradient-text-study">Mnemo</span>
+              <span className="font-bold text-foreground">Mnemo</span>
             </Link>
           </div>
 
-          <div className="glass border border-white/[0.07] rounded-2xl p-5 sm:p-6">
+          <Card className="p-5 sm:p-6">
             <h1 className="text-xl font-bold text-foreground mb-1">Create your account</h1>
             <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-5">Free forever. No credit card required.</p>
 
@@ -145,7 +144,7 @@ export default function SignupPage() {
               <Button type="submit" className="w-full min-h-[44px]" size="lg" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                    <span className="w-4 h-4 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin" />
                     Creating account...
                   </span>
                 ) : (
@@ -160,11 +159,11 @@ export default function SignupPage() {
                 are ever collected. Please don&apos;t upload anything sensitive.
               </p>
             </form>
-          </div>
+          </Card>
 
           <p className="text-center text-xs sm:text-sm text-muted-foreground mt-3 sm:mt-4 px-2 sm:px-0">
             Already have an account?{' '}
-            <Link href="/auth/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+            <Link href="/auth/login" className="text-primary hover:text-primary/80 font-medium transition-colors">
               Sign in
             </Link>
           </p>

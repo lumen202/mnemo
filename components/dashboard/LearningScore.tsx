@@ -1,6 +1,6 @@
 'use client'
 import { TrendingUp, TrendingDown, Minus, Sparkles } from 'lucide-react'
-import { GlassCard } from '@/components/common/GlassCard'
+import { Card } from '@/components/ui/card'
 import { useStudyMaterialStore, useStudySessionStore, useSubjectStore, useFlashcardStore } from '@/store'
 import { computeStudyAnalytics, computeLearningScore } from '@/utils/analytics'
 import { cn } from '@/lib/utils'
@@ -10,12 +10,12 @@ function ScoreRing({ score }: { score: number }) {
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (score / 100) * circumference
 
-  const color = score >= 80 ? '#10b981' : score >= 60 ? '#6366f1' : '#f43f5e'
+  const color = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#f43f5e'
 
   return (
     <div className="relative w-36 h-36 mx-auto">
-      <svg className="w-full h-full -rotate-90 score-ring" viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+      <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r={radius} fill="none" className="stroke-muted" strokeWidth="8" />
         <circle
           cx="60"
           cy="60"
@@ -51,9 +51,9 @@ export function LearningScore() {
   const trendText = trend === 'up' ? '+5 from last week' : trend === 'down' ? '-2 from last week' : 'Stable'
 
   return (
-    <GlassCard className="p-6">
+    <Card className="p-6">
       <div className="flex items-center gap-2 mb-5">
-        <Sparkles className="w-4 h-4 text-indigo-400" />
+        <Sparkles className="w-4 h-4 text-primary" />
         <h3 className="text-sm font-semibold text-foreground">Learning Score</h3>
       </div>
 
@@ -72,14 +72,14 @@ export function LearningScore() {
         {dimensions.map((dim) => {
           const color =
             dim.score >= 80 ? 'bg-emerald-500' :
-            dim.score >= 60 ? 'bg-indigo-500' : 'bg-amber-500'
+            dim.score >= 60 ? 'bg-amber-500' : 'bg-rose-500'
           return (
             <div key={dim.label}>
               <div className="flex justify-between text-xs mb-1">
                 <span className="text-muted-foreground font-medium">{dim.label}</span>
                 <span className="text-foreground font-semibold tabular-nums">{dim.score}</span>
               </div>
-              <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+              <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
                 <div
                   className={cn('h-full rounded-full transition-all duration-700 ease-out', color)}
                   style={{ width: `${dim.score}%` }}
@@ -89,6 +89,6 @@ export function LearningScore() {
           )
         })}
       </div>
-    </GlassCard>
+    </Card>
   )
 }
