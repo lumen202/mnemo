@@ -4,7 +4,7 @@
 
 **AI-powered study companion** — summarize materials, generate flashcards and quizzes, and chat with an AI tutor that stays grounded in your own content.
 
-[![Live Demo](https://img.shields.io/badge/demo-mnemo--omega.vercel.app-6366f1?style=flat-square)](https://mnemo-omega.vercel.app)
+[![Live Demo](https://img.shields.io/badge/demo-mnemo--omega.vercel.app-2f9e8a?style=flat-square)](https://mnemo-omega.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Supabase](https://img.shields.io/badge/Supabase-live-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
@@ -63,7 +63,7 @@ The [live demo](https://mnemo-omega.vercel.app) runs against a real Supabase pro
 
 ```
 app/                  Next.js App Router — pages, layouts, API routes
-components/           UI components (glass-morphism design system, Radix primitives)
+components/           UI components (flat, token-based design system, Radix primitives)
 services/ai/          AI agents + provider abstraction (OpenRouter / Groq)
 services/supabase/    Supabase client + typed repository layer
 store/                Zustand stores (one per domain: auth, materials, flashcards, quizzes, sessions, AI chat, UI)
@@ -78,7 +78,7 @@ types/                Shared type definitions
 | Framework | Next.js 15 (App Router, Turbopack) + React 19 |
 | Language | TypeScript, strict mode |
 | State | Zustand |
-| Styling | Tailwind CSS + a custom glass-morphism design system |
+| Styling | Tailwind CSS + a flat, token-based design system (Radix primitives) |
 | Data | Supabase (Postgres + Auth + Storage), mock-first fallback |
 | AI | OpenRouter (free model router) with automatic Groq failover |
 | Charts | Recharts |
