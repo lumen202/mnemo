@@ -1,6 +1,6 @@
 'use client'
 import { usePathname } from 'next/navigation'
-import { Bell, Plus, Search, Menu } from 'lucide-react'
+import { Plus, Search, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useUIStore } from '@/store'
 
@@ -17,7 +17,7 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
 export function TopBar() {
   const pathname = usePathname()
   const { setSidebarOpen, isMobile } = useUIStore()
-  const { setAddMaterialOpen } = useUIStore()
+  const { setAddMaterialOpen, setCommandPaletteOpen } = useUIStore()
 
   const page = PAGE_TITLES[pathname] ?? { title: 'Mnemo', subtitle: '' }
 
@@ -42,12 +42,24 @@ export function TopBar() {
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground min-h-[44px]">
+        {/* Desktop: a real search affordance that shows the shortcut. */}
+        <button
+          onClick={() => setCommandPaletteOpen(true)}
+          className="hidden md:flex items-center gap-2 h-9 pl-3 pr-2 rounded-lg border border-white/[0.07] bg-white/[0.02] text-muted-foreground hover:text-foreground hover:border-white/20 transition-colors"
+          title="Search pages and actions"
+        >
+          <Search size={15} />
+          <span className="text-xs">Search</span>
+          <kbd className="text-[10px] border border-white/[0.10] rounded px-1.5 py-0.5 ml-2">⌘K</kbd>
+        </button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden text-muted-foreground hover:text-foreground min-h-[44px]"
+          onClick={() => setCommandPaletteOpen(true)}
+          title="Search"
+        >
           <Search size={18} />
-        </Button>
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground relative min-h-[44px]">
-          <Bell size={18} />
-          <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-indigo-400" />
         </Button>
         {isMobile ? (
           <Button

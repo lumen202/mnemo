@@ -199,6 +199,56 @@ export function computeLearningScore(
   return { overall, dimensions, trend, explanation, tips: [] }
 }
 
+export interface StudyPattern {
+  /** Day of week with the most logged hours, e.g. "Tuesday". Null with no data. */
+  bestDay: string | null
+  bestDayHours: number
+  /** Mean length of a logged session, in minutes. */
+  averageSessionMinutes: number
+  /** Subject with the most hours, by display label. */
+  topSubject: string | null
+  /** Sessions logged in the last 7 days. */
+  sessionsThisWeek: number
+}
+
+const FULL_DAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+/**
+ * Descriptive stats over logged sessions. Everything here is derived from the
+ * user's own data — no inferred study "windows" or predictions, since sessions
+ * carry a date but no time of day.
+ */
+export function computeStudyPattern(sessions: StudySession[]): StudyPattern {
+  if (sessions.length === 0) {
+    return { bestDay: null, bestDayHours: 0, averageSessionMinutes: 0, topSubject: null, sessionsThisWeek: 0 }
+  }
+
+  const hoursByDay = new Map<number, number>()
+  const hoursBySubject = new Map<string, number>()
+  sessions.forEach((s) => {
+    const dow = new Date(s.date).getDay()
+    hoursByDay.set(dow, (hoursByDay.get(dow) ?? 0) + s.durationMinutes / 60)
+    hoursBySubject.set(s.subjectId, (hoursBySubject.get(s.subjectId) ?? 0) + s.durationMinutes / 60)
+  })
+
+  const [bestDayIndex, bestDayHours] = [...hoursByDay.entries()].sort((a, b) => b[1] - a[1])[0]
+  const topSubjectId = [...hoursBySubject.entries()].sort((a, b) => b[1] - a[1])[0][0]
+
+  const totalMinutes = sessions.reduce((sum, s) => sum + s.durationMinutes, 0)
+
+  const weekAgo = new Date()
+  weekAgo.setDate(weekAgo.getDate() - 7)
+  const weekAgoStr = weekAgo.toISOString().split('T')[0]
+
+  return {
+    bestDay: FULL_DAY_LABELS[bestDayIndex],
+    bestDayHours: Math.round(bestDayHours * 10) / 10,
+    averageSessionMinutes: Math.round(totalMinutes / sessions.length),
+    topSubject: SUBJECT_META[topSubjectId]?.label ?? topSubjectId,
+    sessionsThisWeek: sessions.filter((s) => s.date >= weekAgoStr).length,
+  }
+}
+
 export function computeSubjectProgress(target: number, completed: number): number {
   if (target <= 0) return 0
   return Math.min((completed / target) * 100, 100)

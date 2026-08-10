@@ -1,17 +1,19 @@
 'use client'
-import { Flame, CalendarDays, CheckCircle, Circle, Target, Clock, TrendingUp, Sparkles } from 'lucide-react'
+import { Flame, CalendarDays, CheckCircle, Circle, Target, Clock, TrendingUp, BarChart3, Plus } from 'lucide-react'
 import { GlassCard } from '@/components/common/GlassCard'
+import { EmptyState } from '@/components/common/EmptyState'
 import { Button } from '@/components/ui/button'
 import { useStudySessionStore, useSubjectStore, useUIStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
 import { cn } from '@/lib/utils'
-import { computeActivityHeatmap } from '@/utils/analytics'
+import { computeActivityHeatmap, computeStudyPattern } from '@/utils/analytics'
 
 export default function PlannerPage() {
   const { sessions, goals, updateGoal } = useStudySessionStore()
   const { subjects } = useSubjectStore()
-  const { addToast } = useUIStore()
+  const { addToast, setLogSessionOpen, setAddGoalOpen } = useUIStore()
   const heatmap = computeActivityHeatmap(sessions)
+  const pattern = computeStudyPattern(sessions)
 
   const toggleGoal = (goal: (typeof goals)[number]) => {
     updateGoal(goal.id, { completed: !goal.completed })
@@ -69,11 +71,26 @@ export default function PlannerPage() {
                   {pendingGoals.length} active
                 </span>
               </div>
-              <Button size="sm" variant="outline" className="gap-1.5 h-7 text-xs">
-                <Sparkles size={11} />
-                AI Suggest
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 h-7 text-xs"
+                onClick={() => setAddGoalOpen(true)}
+              >
+                <Plus size={11} />
+                New goal
               </Button>
             </div>
+
+            {goals.length === 0 && (
+              <EmptyState
+                icon={Target}
+                title="No goals yet"
+                description="Set a goal with a target date to give your study sessions something to aim at."
+                action={{ label: 'Add your first goal', onClick: () => setAddGoalOpen(true), icon: Plus }}
+                className="py-10"
+              />
+            )}
 
             <div className="space-y-3">
               {[...pendingGoals, ...completedGoals].map((goal) => {
@@ -140,10 +157,32 @@ export default function PlannerPage() {
 
           {/* Recent sessions */}
           <GlassCard className="p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Clock size={16} className="text-indigo-400" />
-              <h3 className="text-sm font-semibold text-foreground">Recent Sessions</h3>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Clock size={16} className="text-indigo-400" />
+                <h3 className="text-sm font-semibold text-foreground">Recent Sessions</h3>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 h-7 text-xs"
+                onClick={() => setLogSessionOpen(true)}
+              >
+                <Plus size={11} />
+                Log session
+              </Button>
             </div>
+
+            {sessions.length === 0 && (
+              <EmptyState
+                icon={Clock}
+                title="No sessions logged"
+                description="Log study time to build your streak, activity heatmap, and weekly trend."
+                action={{ label: 'Log a session', onClick: () => setLogSessionOpen(true), icon: Plus }}
+                className="py-10"
+              />
+            )}
+
             <div className="space-y-2">
               {sessions.slice(0, 6).map((session) => {
                 const meta = SUBJECT_META[session.subjectId]
@@ -238,15 +277,36 @@ export default function PlannerPage() {
             </div>
           </GlassCard>
 
-          {/* AI tip */}
+          {/* Study pattern — computed from logged sessions, not predicted */}
           <GlassCard className="p-4 bg-indigo-500/5 border border-indigo-500/20">
             <div className="flex items-start gap-2.5">
-              <Sparkles size={14} className="text-indigo-400 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-semibold text-foreground mb-1">AI Study Tip</p>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Based on your patterns, you study best between 7–9 PM. Schedule your hardest topics during this window for maximum retention.
-                </p>
+              <BarChart3 size={14} className="text-indigo-400 shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-foreground mb-2">Your Study Pattern</p>
+                {pattern.bestDay ? (
+                  <dl className="space-y-1.5 text-[11px]">
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-muted-foreground">Most productive day</dt>
+                      <dd className="text-foreground font-medium">{pattern.bestDay}</dd>
+                    </div>
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-muted-foreground">Average session</dt>
+                      <dd className="text-foreground font-medium tabular-nums">{pattern.averageSessionMinutes} min</dd>
+                    </div>
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-muted-foreground">Most studied</dt>
+                      <dd className="text-foreground font-medium truncate">{pattern.topSubject}</dd>
+                    </div>
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-muted-foreground">Sessions this week</dt>
+                      <dd className="text-foreground font-medium tabular-nums">{pattern.sessionsThisWeek}</dd>
+                    </div>
+                  </dl>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Log a few sessions and your patterns will show up here.
+                  </p>
+                )}
               </div>
             </div>
           </GlassCard>

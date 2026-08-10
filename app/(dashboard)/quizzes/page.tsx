@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { CircleHelp, Sparkles, CheckCircle, XCircle, Trophy, RotateCcw, ChevronRight, Loader2, LayoutGrid, Layers, BookOpen } from 'lucide-react'
 import { GlassCard } from '@/components/common/GlassCard'
+import { EmptyState } from '@/components/common/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -592,6 +593,16 @@ export default function QuizzesPage() {
 
       <GenerateBanner onGenerated={handleGenerated} />
 
+      {quizzes.length === 0 && (
+        <EmptyState
+          icon={CircleHelp}
+          title="No quizzes yet"
+          description="Generate a quiz from a topic or one of your uploaded materials above. You can also ask the AI Tutor to “quiz me on…” anything you're studying."
+        />
+      )}
+
+      {quizzes.length > 0 && (
+      <>
       {/* View mode toggle */}
       <div className="flex items-center gap-3">
         <h2 className="text-sm font-semibold text-foreground">Your Quizzes</h2>
@@ -634,6 +645,8 @@ export default function QuizzesPage() {
           <QuizzesGroupedByMaterial quizzes={quizzes} materials={materials} onStart={handleStart} />
         )}
       </div>
+      </>
+      )}
     </div>
   )
 }

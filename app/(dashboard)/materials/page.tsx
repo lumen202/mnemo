@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { Plus, ArrowUpDown, FileText, StickyNote, Video, Link2, BookMarked, Upload, Sparkles, Loader2, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { GlassCard } from '@/components/common/GlassCard'
+import { EmptyState } from '@/components/common/EmptyState'
 import { Input } from '@/components/ui/input'
 import { useStudyMaterialStore, useUIStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
@@ -328,7 +329,15 @@ export default function MaterialsPage() {
         </div>
 
         <div className="divide-y divide-white/[0.04]">
-          {filtered.length > 0 ? (
+          {materials.length === 0 ? (
+            <EmptyState
+              icon={Upload}
+              title="No materials yet"
+              description="Upload notes, a document, or paste text. Mnemo categorizes it, summarizes it, and can turn it into flashcards and quizzes."
+              action={{ label: 'Upload material', onClick: () => setAddMaterialOpen(true), icon: Upload }}
+              className="border-0 bg-transparent"
+            />
+          ) : filtered.length > 0 ? (
             filtered.map((mat) => (
               <MaterialCard key={mat.id} material={mat} />
             ))

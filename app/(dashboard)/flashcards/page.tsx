@@ -1,7 +1,9 @@
 'use client'
 import { useState } from 'react'
-import { Sparkles, FlipHorizontal, ChevronLeft, ChevronRight, RotateCcw, Check, X, Filter, Loader2 } from 'lucide-react'
+import { Sparkles, FlipHorizontal, ChevronLeft, ChevronRight, RotateCcw, Check, X, Filter, Loader2, CalendarClock, Layers } from 'lucide-react'
 import { GlassCard } from '@/components/common/GlassCard'
+import { EmptyState } from '@/components/common/EmptyState'
+import { SkeletonCard, SkeletonStats } from '@/components/common/Skeleton'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
@@ -9,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useFlashcardStore, useStudyMaterialStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
 import { cn } from '@/lib/utils'
+import { isDue, formatInterval } from '@/utils/srs'
 import type { Flashcard, SubjectId, StudyMaterial } from '@/types'
 import type { FlashcardResponse } from '@/services/ai/types'
 
@@ -18,16 +21,18 @@ const DIFFICULTY_CONFIG = {
   hard:   { color: 'text-rose-400',    bg: 'bg-rose-500/15',    border: 'border-rose-500/25'     },
 }
 
-function FlashcardViewer({ cards }: { cards: Flashcard[] }) {
+function FlashcardViewer({ cards, emptyLabel }: { cards: Flashcard[]; emptyLabel?: string }) {
+  const { reviewFlashcard } = useFlashcardStore()
   const [index, setIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
   const [results, setResults] = useState<Record<string, 'known' | 'unknown'>>({})
+  const [lastSchedule, setLastSchedule] = useState<string | null>(null)
 
   if (cards.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-80 text-center">
         <FlipHorizontal className="w-12 h-12 text-muted-foreground/30 mb-4" />
-        <p className="text-muted-foreground text-sm">No flashcards for this filter.</p>
+        <p className="text-muted-foreground text-sm">{emptyLabel ?? 'No flashcards for this filter.'}</p>
       </div>
     )
   }
@@ -38,7 +43,14 @@ function FlashcardViewer({ cards }: { cards: Flashcard[] }) {
   const progress = ((index) / cards.length) * 100
 
   const next = (result?: 'known' | 'unknown') => {
-    if (result) setResults((r) => ({ ...r, [card.id]: result }))
+    if (result) {
+      setResults((r) => ({ ...r, [card.id]: result }))
+      // Persist the SM-2 interval. `card` is captured before the index
+      // advances, so the outcome always describes the card just graded.
+      reviewFlashcard(card.id, result === 'known').then((outcome) => {
+        if (outcome) setLastSchedule(formatInterval(outcome.intervalDays))
+      })
+    }
     setFlipped(false)
     setTimeout(() => setIndex((i) => Math.min(i + 1, cards.length - 1)), 150)
   }
@@ -46,7 +58,7 @@ function FlashcardViewer({ cards }: { cards: Flashcard[] }) {
     setFlipped(false)
     setTimeout(() => setIndex((i) => Math.max(i - 1, 0)), 150)
   }
-  const reset = () => { setIndex(0); setFlipped(false); setResults({}) }
+  const reset = () => { setIndex(0); setFlipped(false); setResults({}); setLastSchedule(null) }
 
   const isComplete = index === cards.length - 1 && Object.keys(results).length === cards.length
 
@@ -132,6 +144,13 @@ function FlashcardViewer({ cards }: { cards: Flashcard[] }) {
           <RotateCcw size={14} />
         </Button>
       </div>
+
+      {lastSchedule && (
+        <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 -mt-2">
+          <CalendarClock size={11} className="text-indigo-400" />
+          Scheduled for review {lastSchedule}
+        </p>
+      )}
 
       {isComplete && (
         <GlassCard className="p-5 w-full max-w-2xl text-center bg-emerald-500/5 border border-emerald-500/20">
@@ -336,33 +355,148 @@ function GenerateBanner({ onGenerated }: { onGenerated: (count: number) => void 
   )
 }
 
+// ─── Decks ────────────────────────────────────────────────────────────────────
+
+interface Deck {
+  subjectId: SubjectId
+  label: string
+  color: string
+  cards: Flashcard[]
+  dueCount: number
+}
+
+/** Group the flat card set into one deck per subject, busiest deck first. */
+function buildDecks(cards: Flashcard[]): Deck[] {
+  const bySubject = new Map<SubjectId, Flashcard[]>()
+  cards.forEach((c) => {
+    const list = bySubject.get(c.subjectId)
+    if (list) list.push(c)
+    else bySubject.set(c.subjectId, [c])
+  })
+
+  return [...bySubject.entries()]
+    .map(([subjectId, deckCards]) => ({
+      subjectId,
+      label: SUBJECT_META[subjectId]?.label ?? subjectId,
+      color: SUBJECT_META[subjectId]?.color ?? '#6366f1',
+      cards: deckCards,
+      dueCount: deckCards.filter((c) => isDue(c)).length,
+    }))
+    .sort((a, b) => b.dueCount - a.dueCount || b.cards.length - a.cards.length)
+}
+
+function DeckCard({ deck, onStudy }: { deck: Deck; onStudy: () => void }) {
+  // Difficulty mix drives a 3-segment bar — a quick read of how hard a deck is.
+  const mix = (['easy', 'medium', 'hard'] as const).map((d) => ({
+    difficulty: d,
+    count: deck.cards.filter((c) => c.difficulty === d).length,
+  }))
+
+  return (
+    <button
+      onClick={onStudy}
+      className="group text-left rounded-2xl glass border border-white/[0.07] p-4 transition-all hover:border-white/20 hover:-translate-y-0.5"
+    >
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: deck.color + '25' }}
+          >
+            <Layers size={14} style={{ color: deck.color }} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground truncate">{deck.label}</p>
+            <p className="text-[11px] text-muted-foreground">{deck.cards.length} cards</p>
+          </div>
+        </div>
+        {deck.dueCount > 0 && (
+          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-amber-500/15 text-amber-400 shrink-0">
+            {deck.dueCount} due
+          </span>
+        )}
+      </div>
+
+      <div className="flex h-1 rounded-full overflow-hidden bg-white/[0.06] mb-3">
+        {mix.map(({ difficulty, count }) => (
+          count > 0 && (
+            <div
+              key={difficulty}
+              className={cn(
+                difficulty === 'easy' ? 'bg-emerald-500/70'
+                  : difficulty === 'medium' ? 'bg-amber-500/70'
+                  : 'bg-rose-500/70'
+              )}
+              style={{ width: `${(count / deck.cards.length) * 100}%` }}
+              title={`${count} ${difficulty}`}
+            />
+          )
+        ))}
+      </div>
+
+      <span className="text-[11px] font-medium text-indigo-400 flex items-center gap-1">
+        {deck.dueCount > 0 ? 'Study due cards' : 'Review deck'}
+        <ChevronRight size={12} className="transition-transform group-hover:translate-x-0.5" />
+      </span>
+    </button>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function FlashcardsPage() {
-  const { flashcards } = useFlashcardStore()
-  const [subjectFilter, setSubjectFilter] = useState<SubjectId | 'all'>('all')
+  const { flashcards, isLoading } = useFlashcardStore()
+  const [activeDeck, setActiveDeck] = useState<SubjectId | 'all' | null>(null)
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'medium' | 'hard'>('all')
+  const [dueOnly, setDueOnly] = useState(false)
 
-  const filtered = flashcards.filter((f) => {
-    const matchSubject = subjectFilter === 'all' || f.subjectId === subjectFilter
+  const decks = buildDecks(flashcards)
+  const deckCards = activeDeck && activeDeck !== 'all'
+    ? flashcards.filter((f) => f.subjectId === activeDeck)
+    : flashcards
+
+  const filtered = deckCards.filter((f) => {
     const matchDiff = difficultyFilter === 'all' || f.difficulty === difficultyFilter
-    return matchSubject && matchDiff
+    const matchDue = !dueOnly || isDue(f)
+    return matchDiff && matchDue
   })
 
-  const uniqueSubjects = [...new Set(flashcards.map((f) => f.subjectId))]
-  const dueToday = flashcards.filter((f) => {
-    if (!f.nextReview) return false
-    return f.nextReview <= new Date().toISOString().split('T')[0]
-  })
+  // A card with no schedule has never been reviewed — it is due now.
+  const dueToday = flashcards.filter((f) => isDue(f))
+  const scheduled = flashcards.length - dueToday.length
+
+  const openDeck = (deck: SubjectId | 'all') => {
+    setActiveDeck(deck)
+    setDifficultyFilter('all')
+    // Opening a deck that has due cards starts in review mode — that's the
+    // point of the deck. A fully-scheduled deck opens as a plain browse.
+    const cards = deck === 'all' ? flashcards : flashcards.filter((f) => f.subjectId === deck)
+    setDueOnly(cards.some((c) => isDue(c)))
+  }
+
+  const activeLabel = activeDeck === 'all'
+    ? 'All cards'
+    : SUBJECT_META[activeDeck ?? '']?.label ?? activeDeck
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <SkeletonStats />
+        <SkeletonCard lines={5} />
+        <SkeletonCard lines={4} />
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Stats row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total Cards', value: flashcards.length, color: 'text-indigo-400', bg: 'bg-indigo-500/15' },
           { label: 'Due Today',   value: dueToday.length,   color: 'text-amber-400',  bg: 'bg-amber-500/15'  },
-          { label: 'Subjects',    value: uniqueSubjects.length, color: 'text-cyan-400', bg: 'bg-cyan-500/15'  },
+          { label: 'Scheduled',   value: scheduled,         color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+          { label: 'Decks',       value: decks.length,      color: 'text-cyan-400',   bg: 'bg-cyan-500/15'   },
         ].map(({ label, value, color, bg }) => (
           <div key={label} className={cn('rounded-xl p-4 border border-white/[0.06]', bg)}>
             <p className="text-xs text-muted-foreground mb-1">{label}</p>
@@ -373,21 +507,63 @@ export default function FlashcardsPage() {
 
       <GenerateBanner onGenerated={() => {}} />
 
-      {/* Filters */}
+      {flashcards.length === 0 && (
+        <EmptyState
+          icon={Layers}
+          title="No flashcards yet"
+          description="Generate a deck from a topic or one of your uploaded materials using the panel above. Every card you review gets scheduled with spaced repetition, so the ones you struggle with come back sooner."
+        />
+      )}
+
+      {/* Deck grid — the browse view */}
+      {flashcards.length > 0 && activeDeck === null && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-foreground">Your Decks</h2>
+            <button
+              onClick={() => openDeck('all')}
+              className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
+            >
+              Study all {dueToday.length > 0 && `(${dueToday.length} due)`}
+              <ChevronRight size={12} />
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {decks.map((deck) => (
+              <DeckCard key={deck.subjectId} deck={deck} onStudy={() => openDeck(deck.subjectId)} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Focused deck — study + browse a single subject */}
+      {flashcards.length > 0 && activeDeck !== null && (
+      <>
+      {/* Deck header + filters */}
       <GlassCard className="p-4">
         <div className="flex items-center gap-3 flex-wrap">
-          <Filter size={14} className="text-muted-foreground" />
-          <span className="text-xs text-muted-foreground font-medium">Filter:</span>
-          <select
-            value={subjectFilter}
-            onChange={(e) => setSubjectFilter(e.target.value as SubjectId | 'all')}
-            className="h-7 text-xs bg-background border border-border rounded-lg px-3 text-foreground"
+          <button
+            onClick={() => setActiveDeck(null)}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            <option value="all">All subjects</option>
-            {uniqueSubjects.map((s) => (
-              <option key={s} value={s}>{SUBJECT_META[s]?.label ?? s}</option>
-            ))}
-          </select>
+            <ChevronLeft size={13} />
+            Decks
+          </button>
+          <span className="text-sm font-semibold text-foreground">{activeLabel}</span>
+          <Filter size={14} className="text-muted-foreground ml-2" />
+          <button
+            onClick={() => setDueOnly((v) => !v)}
+            className={cn(
+              'text-xs px-3 py-1 rounded-full border transition-all flex items-center gap-1.5',
+              dueOnly
+                ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                : 'border-white/[0.07] text-muted-foreground hover:border-white/20'
+            )}
+            title="Show only cards scheduled for review today"
+          >
+            <CalendarClock size={11} />
+            Due only
+          </button>
           {(['all', 'easy', 'medium', 'hard'] as const).map((d) => (
             <button
               key={d}
@@ -408,16 +584,20 @@ export default function FlashcardsPage() {
 
       {/* Flashcard viewer */}
       <GlassCard className="p-6">
-        <FlashcardViewer cards={filtered} />
+        <FlashcardViewer
+          cards={filtered}
+          emptyLabel={dueOnly ? 'Nothing due right now — every card is scheduled ahead.' : undefined}
+        />
       </GlassCard>
 
-      {/* Card list */}
+      {/* Cards in this deck */}
       <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3">All Flashcards</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-3">
+          Cards in {activeLabel}
+        </h2>
         <div className="space-y-2">
           {filtered.map((card) => {
             const diff = DIFFICULTY_CONFIG[card.difficulty]
-            const meta = SUBJECT_META[card.subjectId]
             return (
               <GlassCard key={card.id} className="p-4 glass-hover">
                 <div className="flex items-start justify-between gap-4">
@@ -429,10 +609,21 @@ export default function FlashcardsPage() {
                     <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium capitalize', diff.bg, diff.color)}>
                       {card.difficulty}
                     </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-muted-foreground">
-                      {meta?.label}
-                    </span>
+                    {activeDeck === 'all' && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-muted-foreground">
+                        {SUBJECT_META[card.subjectId]?.label}
+                      </span>
+                    )}
                     <span className="text-[10px] text-muted-foreground">{card.timesReviewed}× reviewed</span>
+                    <span
+                      className={cn(
+                        'text-[10px] px-2 py-0.5 rounded-full font-medium',
+                        isDue(card) ? 'bg-amber-500/15 text-amber-400' : 'bg-white/5 text-muted-foreground'
+                      )}
+                      title={card.nextReview ? `Next review ${card.nextReview}` : 'Never reviewed'}
+                    >
+                      {isDue(card) ? 'Due' : `Next ${card.nextReview}`}
+                    </span>
                   </div>
                 </div>
               </GlassCard>
@@ -440,6 +631,8 @@ export default function FlashcardsPage() {
           })}
         </div>
       </div>
+      </>
+      )}
     </div>
   )
 }

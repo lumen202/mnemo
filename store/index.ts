@@ -9,6 +9,7 @@ import {
 } from '@/data/mockData'
 import { signInWithEmail, signUpWithEmail, signOut as supabaseSignOut, getSession } from '@/services/supabase/auth'
 import { isSupabaseConfigured } from '@/lib/env'
+import { scheduleReview, type ReviewOutcome } from '@/utils/srs'
 import {
   getSubjects as fetchSubjects,
   getMaterials as fetchMaterials,
@@ -26,6 +27,8 @@ import {
   createQuiz as insertQuiz,
   updateQuizScore as setQuizScore,
   createSession as insertSession,
+  upsertGoal as insertGoal,
+  updateGoal as editGoal,
   deleteSubject as removeSubject,
 } from '@/services/supabase/repository'
 
@@ -239,10 +242,11 @@ interface FlashcardState {
   addFlashcard: (f: Omit<Flashcard, 'id' | 'userId'>) => Promise<void>
   deleteFlashcard: (id: string) => Promise<void>
   updateFlashcard: (id: string, updates: Partial<Flashcard>) => Promise<void>
+  reviewFlashcard: (id: string, knew: boolean) => Promise<ReviewOutcome | null>
   loadFlashcards: (userId: string) => Promise<void>
 }
 
-export const useFlashcardStore = create<FlashcardState>((set) => ({
+export const useFlashcardStore = create<FlashcardState>((set, get) => ({
   flashcards: [],
   isLoading: false,
 
@@ -284,6 +288,35 @@ export const useFlashcardStore = create<FlashcardState>((set) => ({
     if (isSupabaseConfigured()) {
       await editFlashcard(id, updates)
     }
+  },
+
+  /**
+   * Grade a review with the SM-2 scheduler and persist the new interval.
+   * Returns the outcome so the viewer can show "next review in N days";
+   * returns null if the card no longer exists.
+   */
+  reviewFlashcard: async (id, knew) => {
+    const card = get().flashcards.find((f) => f.id === id)
+    if (!card) return null
+
+    const outcome = scheduleReview(card, knew)
+    const updates: Partial<Flashcard> = {
+      timesReviewed: outcome.timesReviewed,
+      lastReviewed: outcome.lastReviewed,
+      nextReview: outcome.nextReview,
+      difficulty: outcome.difficulty,
+    }
+
+    set((state) => ({
+      flashcards: state.flashcards.map((f) => (f.id === id ? { ...f, ...updates } : f)),
+    }))
+
+    if (isSupabaseConfigured()) {
+      // Best-effort: a failed write must never interrupt a study session.
+      // Supabase rejects with a plain object, so this must stay caught.
+      await editFlashcard(id, updates).catch(() => {})
+    }
+    return outcome
   },
 }))
 
@@ -349,6 +382,7 @@ interface StudySessionState {
   goals: StudyGoal[]
   isLoading: boolean
   addSession: (s: Omit<StudySession, 'id' | 'userId'>) => Promise<void>
+  addGoal: (g: Omit<StudyGoal, 'id' | 'userId'>) => Promise<void>
   updateGoal: (id: string, updates: Partial<StudyGoal>) => Promise<void>
   loadSessions: (userId: string) => Promise<void>
   loadGoals: (userId: string) => Promise<void>
@@ -388,10 +422,37 @@ export const useStudySessionStore = create<StudySessionState>((set) => ({
     }
   },
 
+  addGoal: async (g) => {
+    const userId = useAuthStore.getState().user?.id ?? 'user_demo'
+    const tempId = `goal_${Date.now()}`
+    set((state) => ({ goals: [{ ...g, id: tempId, userId }, ...state.goals] }))
+
+    if (isSupabaseConfigured()) {
+      // Swap the optimistic row for the persisted one so later updates target
+      // the real UUID rather than the temp id.
+      const saved = await insertGoal(userId, {
+        title: g.title,
+        targetDate: g.targetDate,
+        description: g.description,
+        subjectId: g.subjectId,
+        completed: g.completed,
+        progress: g.progress,
+      })
+      set((state) => ({
+        goals: state.goals.map((goal) => (goal.id === tempId ? saved : goal)),
+      }))
+    }
+  },
+
   updateGoal: async (id, updates) => {
     set((state) => ({
       goals: state.goals.map((g) => (g.id === id ? { ...g, ...updates } : g)),
     }))
+    // Goal edits were in-memory only before Session 23 — completing a goal was
+    // silently lost on reload. Temp ids (pre-persist) have no row to update.
+    if (isSupabaseConfigured() && !id.startsWith('goal_')) {
+      await editGoal(id, updates).catch(() => {})
+    }
   },
 }))
 
@@ -526,12 +587,18 @@ interface UIState {
   sidebarOpen: boolean
   isMobile: boolean
   addMaterialOpen: boolean
+  logSessionOpen: boolean
+  addGoalOpen: boolean
+  commandPaletteOpen: boolean
   theme: Theme
   toasts: ToastMessage[]
   toggleSidebar: () => void
   setSidebarOpen: (v: boolean) => void
   setIsMobile: (v: boolean) => void
   setAddMaterialOpen: (v: boolean) => void
+  setLogSessionOpen: (v: boolean) => void
+  setAddGoalOpen: (v: boolean) => void
+  setCommandPaletteOpen: (v: boolean) => void
   setTheme: (t: Theme) => void
   addToast: (toast: Omit<ToastMessage, 'id'>) => void
   removeToast: (id: string) => void
@@ -541,12 +608,18 @@ export const useUIStore = create<UIState>((set) => ({
   sidebarOpen: true,
   isMobile: false,
   addMaterialOpen: false,
+  logSessionOpen: false,
+  addGoalOpen: false,
+  commandPaletteOpen: false,
   theme: 'dark',
   toasts: [],
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
   setIsMobile: (isMobile) => set({ isMobile }),
   setAddMaterialOpen: (addMaterialOpen) => set({ addMaterialOpen }),
+  setLogSessionOpen: (logSessionOpen) => set({ logSessionOpen }),
+  setAddGoalOpen: (addGoalOpen) => set({ addGoalOpen }),
+  setCommandPaletteOpen: (commandPaletteOpen) => set({ commandPaletteOpen }),
   setTheme: (theme) => set({ theme }),
   addToast: (toast) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
