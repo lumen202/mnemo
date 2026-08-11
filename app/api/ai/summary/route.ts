@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { run } from '@/services/ai/agents/summaryAgent'
 import { apiError, badRequest } from '@/lib/api'
+import { withAuth } from '@/lib/auth'
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: NextRequest) => {
   try {
     const body = await req.json() as { content?: string; title?: string }
 
@@ -19,4 +20,4 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     return apiError(err)
   }
-}
+}, { cost: 'model' })

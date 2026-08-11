@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PDFParse } from 'pdf-parse'
 import { badRequest, apiError } from '@/lib/api'
+import { withAuth } from '@/lib/auth'
 
 /**
  * PDF → plain text, done once at upload time. A scripted tool, not an AI
@@ -12,7 +13,7 @@ import { badRequest, apiError } from '@/lib/api'
 
 const MAX_FILE_BYTES = 15 * 1024 * 1024 // 15MB — generous for lecture notes/chapters, not a full textbook scan
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: NextRequest) => {
   let parser: PDFParse | null = null
   try {
     const formData = await req.formData()
@@ -43,4 +44,4 @@ export async function POST(req: NextRequest) {
   } finally {
     await parser?.destroy().catch(() => {})
   }
-}
+}, { cost: 'upload' })

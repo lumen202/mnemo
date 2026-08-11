@@ -2,3 +2,6 @@ node_modules
 .next
 .env.local
 tsconfig.tsbuildinfo
+
+# brain entries are private — they live in the private unified-brain repo, never here
+docs/brain/

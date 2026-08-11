@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { badRequest, apiError } from '@/lib/api'
+import { withAuth } from '@/lib/auth'
 
 /**
  * Wiktionary lookup — a real dictionary definition for "define X" queries.
@@ -33,7 +34,7 @@ async function fetchWithTimeout(url: string): Promise<Response> {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: NextRequest) => {
   try {
     const body = (await req.json()) as { word?: string }
     if (!body.word || typeof body.word !== 'string' || !body.word.trim()) {
@@ -67,4 +68,4 @@ export async function POST(req: NextRequest) {
     }
     return apiError(err)
   }
-}
+}, { cost: 'lookup' })

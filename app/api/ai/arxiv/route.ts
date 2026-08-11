@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { badRequest, apiError } from '@/lib/api'
+import { withAuth } from '@/lib/auth'
 
 /**
  * arXiv search — a scripted tool for "find papers on X" queries. arXiv's API
@@ -67,7 +68,7 @@ async function fetchWithTimeout(url: string): Promise<Response> {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: NextRequest) => {
   try {
     const body = (await req.json()) as { query?: string }
     if (!body.query || typeof body.query !== 'string' || !body.query.trim()) {
@@ -91,4 +92,4 @@ export async function POST(req: NextRequest) {
     }
     return apiError(err)
   }
-}
+}, { cost: 'lookup' })
