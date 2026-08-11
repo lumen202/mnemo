@@ -4,6 +4,7 @@ import { HydrateStores } from '@/components/layout/HydrateStores'
 import { GlobalModals } from '@/components/materials/GlobalModals'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { ToastContainer } from '@/components/common/Toast'
+import { OfflineSync } from '@/components/layout/OfflineSync'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -21,6 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
       <GlobalModals />
       <ToastContainer />
+      <OfflineSync />
     </HydrateStores>
   )
 }

@@ -1,251 +1,149 @@
-# 🚀 Roadmap
+# 🗺️ Roadmap
 
-> Every planned feature with implementation guidance so we can build fast.
-> Pick a feature, follow the guide, ship it.
-
----
-
-## Feature Status Key
-- `[ ]` Not started
-- `[~]` In progress
-- `[x]` Done
+> What to build in Mnemo, in the order it should be built.
+>
+> **Rewritten 2026-08-11.** The previous version of this file described a personal-finance app
+> — transactions, budgets, net worth, spending heatmaps — and was never adapted after the
+> project became a study tool. It also listed finished work as not-started. None of it applied,
+> so none of it was carried over.
 
 ---
 
-## 🔐 Auth & User Management
+## Status key
 
-### `[ ]` Route protection middleware
-**Files to create/edit:**
-- Create `middleware.ts` at project root
-```typescript
-// middleware.ts
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+- `[ ]` not started · `[~]` in progress · `[x]` done
 
-export function middleware(request: NextRequest) {
-  const isAuthenticated = request.cookies.get('wm_auth')  // set on login
-  const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
-  const isDashboard = request.nextUrl.pathname.startsWith('/dashboard')
-    || ['/transactions', '/budgets', '/assistant'].some(p => request.nextUrl.pathname.startsWith(p))
-
-  if (isDashboard && !isAuthenticated) {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
-  }
-  if (isAuthPage && isAuthenticated) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-}
-
-export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|public).*)'],
-}
-```
-
-### `[ ]` Real Supabase auth
-**Files to edit:**
-- `store/index.ts` → replace mock `signIn`/`signUp` with calls to `services/supabase/auth.ts`
-- See `docs/DATA_LAYER.md → Activating real Supabase` for full steps
-
-### `[ ]` User profile page
-**Files to create:**
-- `app/(dashboard)/profile/page.tsx`
-- `components/profile/ProfileCard.tsx`
-- `components/profile/AvatarUpload.tsx`
+Priorities are ordered by **what breaks if it stays undone**, not by size.
 
 ---
 
-## 💳 Transactions
+## The one-line thesis
 
-### `[ ]` Recurring transactions
-**Types to update:** `types/index.ts` → add `isRecurring?: boolean`, `recurringInterval?: 'weekly'|'monthly'`
-**Component to update:** `components/transactions/AddTransactionModal.tsx` → add recurring checkbox + interval select
-
-### `[ ]` Transaction CSV import
-**Files to create:**
-- `components/transactions/ImportModal.tsx` — drag-drop CSV upload
-- `utils/csvParser.ts` — parse CSV rows to `Transaction[]`
-- `actions/importTransactions.ts` — server action for bulk insert
-
-### `[ ]` Transaction search with filters memory
-**Files to edit:**
-- `app/(dashboard)/transactions/page.tsx` → persist filter state to `useUIStore` or URL search params
-
-### `[ ]` Transaction tags editor
-**Files to edit:**
-- `components/transactions/TransactionItem.tsx` → add inline tag chips
-- `components/transactions/AddTransactionModal.tsx` → add tag input (comma-separated)
-
-### `[ ]` Transaction edit (not just delete)
-**Files to create:** `components/transactions/EditTransactionModal.tsx`
-**Files to edit:** `components/transactions/TransactionItem.tsx` → add edit button on hover alongside delete
+Mnemo's promise is that it schedules reviews better than a student would themselves. Everything
+else — AI generation, analytics, the planner — exists to serve `nextReview`. So correctness in
+`utils/srs.ts` outranks every feature on this page, and a feature that assumes a wrong schedule
+is worse than no feature.
 
 ---
 
-## 📊 Budget Features
+## Stage 1 — Make the schedule correct
 
-### `[ ]` Add new budget category
-**Files to edit:**
-- `app/(dashboard)/budgets/page.tsx` → "Add Budget" button
-- Create `components/budgets/AddBudgetModal.tsx` (similar to `EditBudgetModal` but with category picker)
-- `store/index.ts → useBudgetStore` → add `addBudget` action
+Nothing else should ship before this. Both defects were confirmed by executing the scheduler,
+not by reading it.
 
-### `[ ]` Budget history / month-over-month
-**Files to create:**
-- `components/budgets/BudgetHistory.tsx` — bar chart comparing budget vs actual over months
-- `data/mockData.ts` → add `MOCK_BUDGET_HISTORY`
+### `[x]` Tests for the scheduler
+**Why first:** `utils/srs.ts` is pure, dependency-free and date-injectable — the most testable
+module in the codebase, holding the logic that decides whether the product works. There are
+currently zero test files in the repo.
+**Create:** `utils/srs.test.ts`
+**Run:** `npm test` → `node --import tsx --test`
+Capture both defects below as failing assertions *before* fixing them.
 
-### `[ ]` Spending velocity indicator
-Shows "at this pace you'll hit limit in X days".
-**Files to edit:** `components/budgets/BudgetCard.tsx`
-**Utils to add:** `utils/analytics.ts → computeVelocity(spent, daysElapsed, budgeted)`
+### `[x]` Day boundaries must be local, not UTC
+**Defect:** `toDateString()` is `d.toISOString().split('T')[0]`, which is the UTC calendar day.
+Every due date and every "is this due" comparison routes through it.
+At UTC+8, any review before 08:00 local reads as *yesterday* — so **a student reviewing in the
+morning sees an empty due queue**. West of UTC the error flips and evening reviews schedule a
+day late.
+**Edit:** `utils/srs.ts → toDateString()` — build from `getFullYear()` / `getMonth()` /
+`getDate()`. Single function; every call site already goes through it.
 
----
+### `[x]` Separate repetitions from lapses
+**Defect:** `scheduleReview()` increments `timesReviewed` on every review, pass *or* fail, then
+uses that counter as SM-2's repetition number — which means consecutive *successful* recalls.
+A card failed four times then passed once is scheduled **10 days out**. The cards a student
+knows least get pushed furthest away, which inverts the point of spaced repetition.
+The same counter drives promotion (`repetitions % 3 === 0`), so failing twice and passing once
+marks a card *easier*.
+**Migration:** add `repetitions int not null default 0` and `lapses int not null default 0` to
+`public.flashcards`.
+**Edit:** `utils/srs.ts` (reset the pass streak on fail), `types/index.ts → Flashcard`,
+`services/supabase/repository.ts` (row mapping both ways), `store/index.ts → gradeCard`.
 
-## 🤖 AI Features
-
-### `[ ]` Context-aware AI chat
-Inject real financial data into every AI message.
-**File to edit:** `components/ai/ChatInterface.tsx`
-```typescript
-// Before calling aiService.chat(), build context:
-const { transactions } = useTransactionStore()
-const { budgets } = useBudgetStore()
-const analytics = computeAnalytics(transactions)
-const context = buildFinancialContext(analytics, budgets) // new util
-await aiService.chat({ prompt: content, context })
-```
-**File to create:** `utils/aiContext.ts → buildFinancialContext()`
-
-### `[ ]` Live AI-generated insights
-Replace `MOCK_INSIGHTS` with real AI-generated ones.
-**Files to create:**
-- `hooks/useAIInsights.ts` — calls `aiService.generateInsights(context)` on mount
-- Parse AI response into `AIInsight[]` format
-**Files to edit:** `store/index.ts → useAIStore` → add `refreshInsights()` action
-
-### `[ ]` AI spending predictions
-Predict end-of-month spend for each category.
-**Utils to add:** `utils/analytics.ts → computeProjectedSpend(spent, daysElapsed, daysInMonth)`
-**AI role:** explain the prediction in natural language, not compute it
-
-### `[ ]` Message history persistence
-Save chat history to localStorage or Supabase.
-**Files to edit:** `store/index.ts → useAIStore` → add `persist` middleware (Zustand)
-```typescript
-import { persist } from 'zustand/middleware'
-export const useAIStore = create(persist(/* ... */, { name: 'wm-ai-chat' }))
-```
-
-### `[ ]` Voice input
-**Files to edit:** `components/ai/ChatInterface.tsx` → add mic button
-**New util:** `utils/speechRecognition.ts` wrapping Web Speech API
+### `[x]` Split per-student ease from AI-assigned difficulty
+`difficulty` is both the AI generator's authoring hint and the student's measured performance,
+so they overwrite each other. A card the AI called "easy" that a student always fails cannot
+represent that state.
+**Migration:** `ease numeric not null default 2.5` on `flashcards`.
+Keep `difficulty` as a read-only authoring hint. Once these are distinct, adopting FSRS later
+is a scheduler swap rather than a schema migration.
 
 ---
 
-## 📈 Analytics & Insights
+## Stage 2 — Give the schedule a way to reach the student
 
-### `[ ]` Monthly reports page
-**Files to create:**
-- `app/(dashboard)/reports/page.tsx`
-- `components/reports/MonthlyReport.tsx` — full breakdown of a month
-- `components/reports/MonthSelector.tsx`
-
-### `[ ]` Net worth tracker
-**Files to create:**
-- `app/(dashboard)/net-worth/page.tsx`
-- `types/index.ts` → add `Asset`, `Liability` interfaces
-- `components/net-worth/NetWorthChart.tsx`
-
-### `[ ]` Savings goals
-**Files to create:**
-- `app/(dashboard)/goals/page.tsx`
-- `components/goals/GoalCard.tsx` — target amount, deadline, progress ring
-- `types/index.ts` → add `SavingsGoal` interface
-- `store/index.ts` → add `useGoalStore`
-
-### `[ ]` Spending heatmap calendar
-Visual calendar showing spending intensity per day.
-**Files to create:** `components/charts/SpendingCalendar.tsx`
+### `[x]` Due-card reminders
+**Why:** there is no email, push, or notification code anywhere in the app. A spaced-repetition
+product whose schedule cannot reach anyone has no mechanism for return visits. This is the
+largest retention lever available — and it is worthless before Stage 1, because reminding
+someone about a queue computed on the wrong day is worse than silence.
+**Create:** `app/api/cron/due-reminders/route.ts` (scheduled), an email sender in `services/`,
+and a per-user preference (opt-in, quiet hours, local timezone).
+**Note:** the reminder must use the student's local day — the same fix as Stage 1.
 
 ---
 
-## 🎨 UI & UX
+## Stage 3 — Close the known scale gaps
 
-### `[ ]` Toast notification system
-**Files to create:**
-- `components/common/Toast.tsx` — animated toast component
-- `components/common/ToastContainer.tsx` — positioned container
-- `store/index.ts → useUIStore` → add `toasts[]`, `addToast()`, `removeToast()`
-- Use in: `AddTransactionModal` (success), `EditBudgetModal` (saved)
+### `[x]` Authentication on every API route
+Nine routes were publicly callable. One shared guard in `lib/auth.ts`, applied via `withAuth`.
 
-### `[ ]` Dark/Light mode toggle
-**Files to edit:**
-- `app/layout.tsx` → remove hardcoded `dark` class
-- `store/index.ts → useUIStore` → add `theme: 'dark'|'light'`
-- `components/layout/TopBar.tsx` → add toggle button
-- `tailwind.config.ts` → already supports `darkMode: ['class']`
+### `[x]` Per-user rate limiting
+Cost classes (`model` / `lookup` / `upload`) in `lib/rateLimit.ts`, per-instance counter plus a
+shared Postgres counter. **Requires `supabase db push`** to activate the shared tier.
 
-### `[ ]` Mobile sidebar (drawer)
-**Files to create:** `components/layout/MobileDrawer.tsx` — Sheet-style slide-in
-**Files to edit:** `app/(dashboard)/layout.tsx` → render Sidebar on desktop, MobileDrawer on mobile
+### `[x]` Cross-instance response cache
+`services/ai/sharedCache.ts`. Also moved the "is this answer shareable" decision server-side —
+it previously depended on a browser-side regex, so personal answers could be cached and served
+to other students.
 
-### `[ ]` Onboarding flow
-**Files to create:**
-- `app/(dashboard)/onboarding/page.tsx` — multi-step wizard
-- `components/onboarding/OnboardingStep.tsx`
-- Steps: set income → choose categories → set budget targets → first transaction
+### `[x]` Pagination on list queries
+20 `.select()` calls in `services/supabase/repository.ts`, zero `.limit()`. Invisible at 12
+materials; it becomes the whole experience at 500.
 
-### `[ ]` Empty states
-**Files to create:** `components/common/EmptyState.tsx`
-**Files to edit:** `TransactionList`, `BudgetList` — show empty state when no data
-
-### `[ ]` Keyboard shortcuts
-Add `useEffect` with `keydown` listener in layout:
-- `Cmd+K` → search
-- `Cmd+N` → add transaction
-- `Cmd+/` → open AI assistant
+### `[x]` One schema source of truth
+The duplicate `services/supabase/schema.sql` had no RLS and still called the product
+"StudyMind". Removed; `supabase/migrations/` is authoritative and applied in filename order.
 
 ---
 
-## 🔧 Infrastructure
+## Stage 4 — Growth features
 
-### `[ ]` Server actions for mutations
-**Files to create:** `actions/transactions.ts`, `actions/budgets.ts`
-```typescript
-// actions/transactions.ts
-'use server'
-export async function createTransaction(data: Omit<Transaction, 'id'>) {
-  return insertTransaction(data)
-}
-```
+Each of these assumes Stages 1–3 are true.
 
-### `[ ]` API route for AI (server-side key security)
-Move OpenRouter API key to server-side:
-**Files to create:** `app/api/ai/chat/route.ts`
-```typescript
-export async function POST(req: Request) {
-  const { prompt } = await req.json()
-  // call OpenRouter with server-side key
-}
-```
-**Files to edit:** `services/ai/aiService.ts → liveResponse()` → call `/api/ai/chat` instead of OpenRouter directly
+### `[x]` Offline review (PWA)
+No manifest, service worker or IndexedDB today. Reviews are the most offline-friendly operation
+in the app: small payloads, queued writes, and students review on transit and in buildings with
+bad signal.
+**Create:** `app/manifest.ts`, a service worker, an outbox that replays grades on reconnect.
 
-### `[ ]` Error boundary
-**Files to create:** `components/common/ErrorBoundary.tsx`
-**Files to edit:** `app/(dashboard)/layout.tsx` → wrap children in ErrorBoundary
+### `[x]` Export and Anki import
+No export path exists. Students who cannot get their cards out treat the app as a trial rather
+than a home, and Anki import is the cheapest acquisition channel a flashcard app has.
 
-### `[ ]` Loading skeletons
-Replace instant renders with skeleton screens for perceived performance.
-**Files to create:** `components/common/Skeleton.tsx`
-**Files to edit:** Each dashboard widget → show skeleton while `isLoading`
+### `[x]` Review forecast
+Every interval is stored but the workload ahead is never shown. "34 cards due Thursday" is what
+makes a student trust the schedule instead of cramming — and it is a read over existing data.
 
 ---
 
-## 📱 PWA / Mobile
+## Deliberately not on this list
 
-### `[ ]` PWA manifest
-**Files to create:** `public/manifest.json`, icons in `public/icons/`
-**Files to edit:** `app/layout.tsx` → add `<link rel="manifest">`
+Verified present, so not gaps: manual card creation, card edit and delete, quiz retake, search
+across materials and flashcards, streak tracking, command palette, error boundaries, toasts,
+loading skeletons, theme toggle, route-protection middleware, server-side AI keys.
 
-### `[ ]` Responsive transaction list
-**Files to edit:** `components/transactions/TransactionItem.tsx` → collapse merchant/date on mobile (already partially done with `hidden sm:block`)
+---
+
+## Operational follow-ups
+
+- `supabase db push` — **five** migrations are written but unapplied: rate limits, response
+  cache, flashcard repetitions/lapses, ease + reminder preferences. Until then, limits are
+  per-instance, the shared cache is inert, and reminders have no preference table to read.
+  Each subsystem logs its own status rather than failing silently.
+- `SUPABASE_SERVICE_ROLE_KEY` must be set in the deployment environment, not only locally.
+- `CRON_SECRET` must be set, or the reminder job refuses to run — an unauthenticated endpoint
+  that sends mail is a spam relay.
+- `RESEND_API_KEY` and `EMAIL_FROM` enable delivery. Without them reminders are computed and
+  logged but not sent.
+- `NEXT_PUBLIC_APP_URL` is used for links inside reminder emails.

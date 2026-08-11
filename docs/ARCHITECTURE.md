@@ -153,7 +153,7 @@ Same pattern applies to `aiService.ts` — no `OPENROUTER_API_KEY` → uses `MOC
 ## Adding Real Supabase
 
 1. Create project at [supabase.com](https://supabase.com)
-2. Run `services/supabase/schema.sql` in the SQL editor
+2. Apply migrations with `supabase db push` (or paste `supabase/migrations/*.sql` into the SQL editor, in filename order)
 3. Copy keys to `.env.local`:
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co

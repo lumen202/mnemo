@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const DASHBOARD_PATHS = [
   '/dashboard', '/materials', '/subjects',
-  '/flashcards', '/quizzes', '/planner', '/assistant',
+  '/flashcards', '/quizzes', '/planner', '/assistant', '/settings',
 ]
 const AUTH_PATHS = ['/auth']
 
@@ -77,6 +77,7 @@ export const config = {
     '/quizzes/:path*',
     '/planner/:path*',
     '/assistant/:path*',
+    '/settings/:path*',
     '/auth/:path*',
   ],
 }

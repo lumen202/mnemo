@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useStudySessionStore, useUIStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
 import type { SubjectId } from '@/types'
+import { toDateString } from '@/utils/date'
 
 const SUBJECT_OPTIONS: SubjectId[] = [
   'mathematics', 'computer-science', 'physics', 'machine-learning',
@@ -20,7 +21,7 @@ const NO_SUBJECT = '__none__'
 function defaultTargetDate(): string {
   const d = new Date()
   d.setDate(d.getDate() + 14)
-  return d.toISOString().split('T')[0]
+  return toDateString(d)
 }
 
 export function AddGoalModal() {

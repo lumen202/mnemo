@@ -1,5 +1,6 @@
 import type { StudyMaterial, StudySession, Subject, StudyAnalytics, SubjectStudy, WeeklyStudyTrend, Flashcard, LearningHealthScore } from '@/types'
 import { SUBJECT_META } from '@/data/mockData'
+import { todayString, toDateString, fromDateString } from './date'
 
 export function computeStudyAnalytics(
   materials: StudyMaterial[],
@@ -12,11 +13,11 @@ export function computeStudyAnalytics(
   ).length
 
   // Streak: consecutive days from today backwards
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayString()
   const sessionDates = new Set(sessions.map((s) => s.date))
   let streak = 0
-  const cursor = new Date(today)
-  while (sessionDates.has(cursor.toISOString().split('T')[0])) {
+  const cursor = fromDateString(today)
+  while (sessionDates.has(toDateString(cursor))) {
     streak++
     cursor.setDate(cursor.getDate() - 1)
   }
@@ -72,7 +73,7 @@ export function computeActivityHeatmap(sessions: StudySession[], weeks = 6): Hea
   for (let i = totalDays - 1; i >= 0; i--) {
     const d = new Date(today)
     d.setDate(d.getDate() - i)
-    const dateStr = d.toISOString().split('T')[0]
+    const dateStr = toDateString(d)
     days.push({
       day: DAY_LABELS[d.getDay()],
       weeksAgo: Math.floor(i / 7),
@@ -238,7 +239,7 @@ export function computeStudyPattern(sessions: StudySession[]): StudyPattern {
 
   const weekAgo = new Date()
   weekAgo.setDate(weekAgo.getDate() - 7)
-  const weekAgoStr = weekAgo.toISOString().split('T')[0]
+  const weekAgoStr = toDateString(weekAgo)
 
   return {
     bestDay: FULL_DAY_LABELS[bestDayIndex],

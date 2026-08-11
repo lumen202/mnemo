@@ -31,6 +31,7 @@ import {
   updateGoal as editGoal,
   deleteSubject as removeSubject,
 } from '@/services/supabase/repository'
+import { queueReview, flushOutbox } from '@/utils/offlineOutbox'
 
 // ─── Auth Store ────────────────────────────────────────────────────────────────
 
@@ -243,6 +244,8 @@ interface FlashcardState {
   deleteFlashcard: (id: string) => Promise<void>
   updateFlashcard: (id: string, updates: Partial<Flashcard>) => Promise<void>
   reviewFlashcard: (id: string, knew: boolean) => Promise<ReviewOutcome | null>
+  /** Replay grades queued while offline. */
+  syncPendingReviews: () => Promise<{ flushed: number; remaining: number }>
   loadFlashcards: (userId: string) => Promise<void>
 }
 
@@ -302,6 +305,9 @@ export const useFlashcardStore = create<FlashcardState>((set, get) => ({
     const outcome = scheduleReview(card, knew)
     const updates: Partial<Flashcard> = {
       timesReviewed: outcome.timesReviewed,
+      repetitions: outcome.repetitions,
+      lapses: outcome.lapses,
+      ease: outcome.ease,
       lastReviewed: outcome.lastReviewed,
       nextReview: outcome.nextReview,
       difficulty: outcome.difficulty,
@@ -312,11 +318,23 @@ export const useFlashcardStore = create<FlashcardState>((set, get) => ({
     }))
 
     if (isSupabaseConfigured()) {
-      // Best-effort: a failed write must never interrupt a study session.
+      // A failed write must never interrupt a study session — but it must not be discarded
+      // either. Losing a grade silently corrupts the schedule, which is the product. So the
+      // write is attempted, and on any failure the grade goes to a durable queue that is
+      // replayed when the connection returns (see utils/offlineOutbox.ts).
       // Supabase rejects with a plain object, so this must stay caught.
-      await editFlashcard(id, updates).catch(() => {})
+      await editFlashcard(id, updates).catch(() => queueReview(id, updates))
     }
     return outcome
+  },
+
+  /**
+   * Replay grades taken while offline. Called on reconnect and at app start.
+   * Returns how many were sent so the UI can acknowledge it rather than silently syncing.
+   */
+  syncPendingReviews: async () => {
+    if (!isSupabaseConfigured()) return { flushed: 0, remaining: 0 }
+    return flushOutbox((id, updates) => editFlashcard(id, updates))
   },
 }))
 

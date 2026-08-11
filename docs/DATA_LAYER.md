@@ -124,7 +124,7 @@ The app runs without Supabase. Services detect placeholder credentials and retur
 | `services/supabase/client.ts` | Singleton client with no-op storage for SSR safety |
 | `services/supabase/auth.ts` | Auth helpers (signIn, signUp, signOut, getSession) |
 | `services/supabase/transactions.ts` | CRUD for transactions table |
-| `services/supabase/schema.sql` | Full DB schema + RLS policies |
+| `supabase/migrations/*.sql` | Full DB schema + RLS policies. Applied in filename order; the only source of truth. |
 
 ### Activating real Supabase
 
@@ -132,7 +132,7 @@ The app runs without Supabase. Services detect placeholder credentials and retur
 
 **Step 2:** Run schema in SQL editor:
 ```sql
--- Copy contents of services/supabase/schema.sql
+-- Apply every file in supabase/migrations/ in filename order
 -- Paste into Supabase SQL editor → Run
 ```
 

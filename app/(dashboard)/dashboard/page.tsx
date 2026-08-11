@@ -4,6 +4,7 @@ import { SubjectBreakdown } from '@/components/dashboard/SubjectBreakdown'
 import { RecentMaterials } from '@/components/dashboard/RecentMaterials'
 import { LearningScore } from '@/components/dashboard/LearningScore'
 import { LearningInsightsPanel } from '@/components/dashboard/AIInsightsPanel'
+import { ReviewForecast } from '@/components/dashboard/ReviewForecast'
 
 export default function DashboardPage() {
   return (
@@ -12,6 +13,9 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-5">
         <StudyStatsCard />
       </div>
+
+      {/* Review load — what the schedule is asking of you this fortnight */}
+      <ReviewForecast />
 
       {/* Middle row — chart + learning score */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

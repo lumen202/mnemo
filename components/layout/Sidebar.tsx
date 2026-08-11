@@ -5,8 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, BookOpen, Layers, Brain, LogOut,
   GraduationCap, ChevronLeft, ChevronRight, Sparkles,
-  FlipHorizontal, CircleHelp, CalendarDays, X,
-} from 'lucide-react'
+  FlipHorizontal, CircleHelp, CalendarDays, X, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore, useAuthStore } from '@/store'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -32,6 +31,7 @@ const NAV_ITEMS = [
   { href: '/quizzes',    label: 'Quizzes',         icon: CircleHelp      },
   { href: '/planner',    label: 'Planner',         icon: CalendarDays    },
   { href: '/assistant',  label: 'AI Tutor',        icon: Brain           },
+  { href: '/settings',   label: 'Settings',        icon: Settings        },
 ]
 
 export function Sidebar() {

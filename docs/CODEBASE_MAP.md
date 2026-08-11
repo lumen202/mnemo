@@ -141,7 +141,7 @@ aiService                  → singleton instance, exported
 | `client.ts` | `supabase` singleton with no-op storage (SSR-safe) |
 | `auth.ts` | `signInWithEmail`, `signUpWithEmail`, `signOut`, `getSession` |
 | `transactions.ts` | `fetchTransactions`, `insertTransaction`, `deleteTransaction` — mock-first |
-| `schema.sql` | Paste into Supabase SQL editor to create tables + RLS policies |
+| `supabase/migrations/` | Apply with `supabase db push` to create tables + RLS policies |
 
 ---
 

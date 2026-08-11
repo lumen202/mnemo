@@ -7,6 +7,7 @@ import { useStudySessionStore, useSubjectStore, useUIStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 import { computeActivityHeatmap, computeStudyPattern } from '@/utils/analytics'
+import { todayString, toDateString } from '@/utils/date'
 
 export default function PlannerPage() {
   const { sessions, goals, updateGoal } = useStudySessionStore()
@@ -23,7 +24,7 @@ export default function PlannerPage() {
   }
 
   const totalHoursThisMonth = sessions.reduce((s, sess) => s + sess.durationMinutes / 60, 0)
-  const todaySessions = sessions.filter((s) => s.date === new Date().toISOString().split('T')[0])
+  const todaySessions = sessions.filter((s) => s.date === todayString())
   const todayHours = todaySessions.reduce((s, sess) => s + sess.durationMinutes / 60, 0)
   const activeDays = new Set(sessions.map((s) => s.date)).size
 
@@ -31,7 +32,7 @@ export default function PlannerPage() {
   const sessionDates = new Set(sessions.map((s) => s.date))
   let streak = 0
   const cursor = new Date()
-  while (sessionDates.has(cursor.toISOString().split('T')[0])) {
+  while (sessionDates.has(toDateString(cursor))) {
     streak++
     cursor.setDate(cursor.getDate() - 1)
   }

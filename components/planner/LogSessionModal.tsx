@@ -9,6 +9,7 @@ import { useStudySessionStore, useUIStore } from '@/store'
 import { SUBJECT_META } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 import type { SubjectId } from '@/types'
+import { todayString } from '@/utils/date'
 
 const SUBJECT_OPTIONS: SubjectId[] = [
   'mathematics', 'computer-science', 'physics', 'machine-learning',
@@ -17,10 +18,6 @@ const SUBJECT_OPTIONS: SubjectId[] = [
 
 /** Preset durations — logging a session should take two clicks, not a form. */
 const DURATIONS = [15, 30, 45, 60, 90, 120]
-
-function todayString(): string {
-  return new Date().toISOString().split('T')[0]
-}
 
 export function LogSessionModal() {
   const { logSessionOpen, setLogSessionOpen, addToast } = useUIStore()

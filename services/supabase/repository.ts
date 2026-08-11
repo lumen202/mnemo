@@ -1,4 +1,5 @@
 import { supabase } from './client'
+import { todayString } from '@/utils/date'
 import type {
   Subject,
   StudyMaterial,
@@ -56,6 +57,9 @@ interface FlashcardRow {
   back: string
   difficulty: string
   times_reviewed: number
+  repetitions: number | null
+  lapses: number | null
+  ease: number | null
   last_reviewed: string | null
   next_review: string | null
   created_at: string
@@ -159,6 +163,9 @@ function toFlashcard(row: FlashcardRow): Flashcard {
     back: row.back,
     difficulty: row.difficulty as Flashcard['difficulty'],
     timesReviewed: row.times_reviewed,
+    repetitions: row.repetitions ?? 0,
+    lapses: row.lapses ?? 0,
+    ease: row.ease ?? undefined,
     lastReviewed: row.last_reviewed ?? undefined,
     nextReview: row.next_review ?? undefined,
   }
@@ -219,12 +226,13 @@ function toInsight(row: InsightRow): AIInsight {
 
 // ─── Subjects ─────────────────────────────────────────────────────────────────
 
-export async function getSubjects(userId: string): Promise<Subject[]> {
+export async function getSubjects(userId: string, page?: PageOptions): Promise<Subject[]> {
   const { data, error } = await supabase
     .from('subjects')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
+    .range(page?.offset ?? 0, (page?.offset ?? 0) + (page?.limit ?? DEFAULT_PAGE_SIZE) - 1)
 
   if (error) throw error
   return (data ?? []).map(toSubject)
@@ -263,12 +271,13 @@ export async function deleteSubject(id: string): Promise<void> {
 const MATERIAL_LIST_COLUMNS =
   'id,user_id,title,subject,type,status,upload_date,description,summary,key_points,tags,pages,word_count,source,created_at'
 
-export async function getMaterials(userId: string): Promise<StudyMaterial[]> {
+export async function getMaterials(userId: string, page?: PageOptions): Promise<StudyMaterial[]> {
   const { data, error } = await supabase
     .from('study_materials')
     .select(MATERIAL_LIST_COLUMNS)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
+    .range(page?.offset ?? 0, (page?.offset ?? 0) + (page?.limit ?? DEFAULT_PAGE_SIZE) - 1)
 
   if (error) throw error
   return (data ?? []).map(toMaterial)
@@ -297,7 +306,7 @@ export async function createMaterial(
       subject: material.subject,
       type: material.type,
       status: material.status ?? 'pending',
-      upload_date: material.uploadDate ?? new Date().toISOString().slice(0, 10),
+      upload_date: material.uploadDate ?? todayString(),
       description: material.description ?? null,
       summary: material.summary ?? null,
       key_points: material.keyPoints ?? null,
@@ -346,26 +355,44 @@ export async function deleteMaterial(id: string): Promise<void> {
   if (error) throw error
 }
 
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+/**
+ * Every list read is bounded. Unbounded `select('*')` is invisible at a dozen rows and becomes
+ * the entire experience at several hundred — the payload, the parse, and the render all grow
+ * together. Callers that genuinely want everything must now say so by paging.
+ */
+export interface PageOptions {
+  limit?: number
+  offset?: number
+}
+
+/** Generous enough that no current screen notices, small enough to bound the worst case. */
+export const DEFAULT_PAGE_SIZE = 200
+
+
 // ─── Flashcards ───────────────────────────────────────────────────────────────
 
-export async function getFlashcards(userId: string): Promise<Flashcard[]> {
+export async function getFlashcards(userId: string, page?: PageOptions): Promise<Flashcard[]> {
   const { data, error } = await supabase
     .from('flashcards')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
+    .range(page?.offset ?? 0, (page?.offset ?? 0) + (page?.limit ?? DEFAULT_PAGE_SIZE) - 1)
 
   if (error) throw error
   return (data ?? []).map(toFlashcard)
 }
 
-export async function getFlashcardsDue(userId: string, beforeDate: string): Promise<Flashcard[]> {
+export async function getFlashcardsDue(userId: string, beforeDate: string, page?: PageOptions): Promise<Flashcard[]> {
   const { data, error } = await supabase
     .from('flashcards')
     .select('*')
     .eq('user_id', userId)
     .lte('next_review', beforeDate)
     .order('next_review', { ascending: true })
+    .range(page?.offset ?? 0, (page?.offset ?? 0) + (page?.limit ?? DEFAULT_PAGE_SIZE) - 1)
 
   if (error) throw error
   return (data ?? []).map(toFlashcard)
@@ -401,6 +428,9 @@ export async function updateFlashcard(id: string, updates: Partial<Flashcard>): 
   if (updates.back !== undefined) db.back = updates.back
   if (updates.difficulty !== undefined) db.difficulty = updates.difficulty
   if (updates.timesReviewed !== undefined) db.times_reviewed = updates.timesReviewed
+  if (updates.repetitions !== undefined) db.repetitions = updates.repetitions
+  if (updates.lapses !== undefined) db.lapses = updates.lapses
+  if (updates.ease !== undefined) db.ease = updates.ease
   if (updates.lastReviewed !== undefined) db.last_reviewed = updates.lastReviewed
   if (updates.nextReview !== undefined) db.next_review = updates.nextReview
   if (updates.materialId !== undefined) db.material_id = updates.materialId
@@ -423,12 +453,13 @@ export async function deleteFlashcard(id: string): Promise<void> {
 
 // ─── Quizzes ──────────────────────────────────────────────────────────────────
 
-export async function getQuizzes(userId: string): Promise<Quiz[]> {
+export async function getQuizzes(userId: string, page?: PageOptions): Promise<Quiz[]> {
   const { data, error } = await supabase
     .from('quizzes')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
+    .range(page?.offset ?? 0, (page?.offset ?? 0) + (page?.limit ?? DEFAULT_PAGE_SIZE) - 1)
 
   if (error) throw error
   return (data ?? []).map(toQuiz)
@@ -469,12 +500,13 @@ export async function updateQuizScore(id: string, score: number, completedAt: st
 
 // ─── Study Sessions ───────────────────────────────────────────────────────────
 
-export async function getSessions(userId: string): Promise<StudySession[]> {
+export async function getSessions(userId: string, page?: PageOptions): Promise<StudySession[]> {
   const { data, error } = await supabase
     .from('study_sessions')
     .select('*')
     .eq('user_id', userId)
     .order('date', { ascending: false })
+    .range(page?.offset ?? 0, (page?.offset ?? 0) + (page?.limit ?? DEFAULT_PAGE_SIZE) - 1)
 
   if (error) throw error
   return (data ?? []).map(toSession)
@@ -503,12 +535,13 @@ export async function createSession(
 
 // ─── Study Goals ──────────────────────────────────────────────────────────────
 
-export async function getGoals(userId: string): Promise<StudyGoal[]> {
+export async function getGoals(userId: string, page?: PageOptions): Promise<StudyGoal[]> {
   const { data, error } = await supabase
     .from('study_goals')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
+    .range(page?.offset ?? 0, (page?.offset ?? 0) + (page?.limit ?? DEFAULT_PAGE_SIZE) - 1)
 
   if (error) throw error
   return (data ?? []).map(toGoal)
@@ -558,12 +591,13 @@ export async function updateGoal(id: string, updates: Partial<StudyGoal>): Promi
 
 // ─── AI Insights ──────────────────────────────────────────────────────────────
 
-export async function getInsights(userId: string): Promise<AIInsight[]> {
+export async function getInsights(userId: string, page?: PageOptions): Promise<AIInsight[]> {
   const { data, error } = await supabase
     .from('ai_insights')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
+    .range(page?.offset ?? 0, (page?.offset ?? 0) + (page?.limit ?? DEFAULT_PAGE_SIZE) - 1)
 
   if (error) throw error
   return (data ?? []).map(toInsight)

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "comment": "Hourly, because a student's chosen send hour is 24 different instants across a userbase. The route selects only those whose local clock currently reads their send_hour, and is idempotent per local day.",
+      "path": "/api/cron/due-reminders",
+      "schedule": "0 * * * *"
+    }
+  ]
+}

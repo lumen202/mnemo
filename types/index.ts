@@ -63,8 +63,16 @@ export interface Flashcard {
   subjectId: SubjectId
   front: string
   back: string
+  /** The generator's authoring hint, and the tier the scheduler reads its ease from. */
   difficulty: FlashcardDifficulty
+  /** Lifetime review count, pass or fail. Display only — never the scheduling input. */
   timesReviewed: number
+  /** Consecutive successful recalls; any failure resets it to 0. Drives the interval. */
+  repetitions?: number
+  /** Lifetime failures. High values mark a leech. */
+  lapses?: number
+  /** This student's ease factor for this card (SM-2 EF, 1.30–2.80). Distinct from `difficulty`. */
+  ease?: number
   lastReviewed?: string
   nextReview?: string
 }

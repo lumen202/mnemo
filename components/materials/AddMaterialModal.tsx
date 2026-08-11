@@ -10,6 +10,7 @@ import { SUBJECT_META } from '@/data/mockData'
 import { supabase } from '@/services/supabase/client'
 import { isSupabaseConfigured } from '@/lib/env'
 import type { SubjectId, MaterialType } from '@/types'
+import { todayString } from '@/utils/date'
 
 const BUCKET = 'Study Materials'
 
@@ -147,7 +148,7 @@ export function AddMaterialModal() {
         subject: 'other',
         type: materialType,
         status: 'pending',
-        uploadDate: new Date().toISOString().slice(0, 10),
+        uploadDate: todayString(),
         content: content.trim() || undefined,
         wordCount: content.trim() ? content.split(/\s+/).filter(Boolean).length : undefined,
         source: source ?? undefined,

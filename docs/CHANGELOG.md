@@ -37,7 +37,7 @@
 - `services/supabase/client.ts` — SSR-safe client with no-op in-memory storage
 - `services/supabase/auth.ts` — `signInWithEmail`, `signUpWithEmail`, `signOut`, `getSession`
 - `services/supabase/transactions.ts` — mock-first CRUD (fetch, insert, delete)
-- `services/supabase/schema.sql` — full schema with RLS policies
+- `supabase/migrations/` — full schema with RLS policies (a duplicate `services/supabase/schema.sql` was removed 2026-08-11; it had drifted and carried no RLS)
 
 ### State management
 - `store/index.ts` — 5 Zustand stores: `useAuthStore`, `useTransactionStore`, `useBudgetStore`, `useAIStore`, `useUIStore`
