@@ -13,6 +13,7 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   '/quizzes':    { title: 'Quizzes',         subtitle: 'Test your knowledge'             },
   '/planner':    { title: 'Study Planner',   subtitle: 'Goals, sessions, and schedule'   },
   '/assistant':  { title: 'AI Tutor',        subtitle: 'Your personal learning assistant'},
+  '/settings':   { title: 'Settings',        subtitle: 'Reminders and deck export/import'},
 }
 
 export function TopBar() {

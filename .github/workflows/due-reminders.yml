@@ -1,0 +1,22 @@
+name: Due reminders cron
+
+# Vercel Hobby plans only allow daily cron jobs, but this endpoint is designed to run hourly —
+# each run only emails students whose *local* clock currently reads their chosen send hour, so
+# a daily trigger would only ever match one timezone. GitHub Actions' free scheduled workflows
+# (unlimited on public repos) stand in for Vercel Cron until/unless the project is on a paid plan.
+# See app/api/cron/due-reminders/route.ts for the endpoint itself.
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call due-reminders endpoint
+        run: |
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ vars.APP_URL || 'https://mnemo-omega.vercel.app' }}/api/cron/due-reminders"

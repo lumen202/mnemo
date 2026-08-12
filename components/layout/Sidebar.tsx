@@ -23,15 +23,28 @@ import {
   DialogPortal,
 } from '@/components/ui/dialog'
 
-const NAV_ITEMS = [
-  { href: '/dashboard',  label: 'Dashboard',      icon: LayoutDashboard },
-  { href: '/materials',  label: 'Study Materials', icon: BookOpen        },
-  { href: '/subjects',   label: 'Subjects',        icon: Layers          },
-  { href: '/flashcards', label: 'Flashcards',      icon: FlipHorizontal  },
-  { href: '/quizzes',    label: 'Quizzes',         icon: CircleHelp      },
-  { href: '/planner',    label: 'Planner',         icon: CalendarDays    },
-  { href: '/assistant',  label: 'AI Tutor',        icon: Brain           },
-  { href: '/settings',   label: 'Settings',        icon: Settings        },
+// Grouped instead of one flat list: Dashboard + AI Tutor are the two obvious top-level
+// destinations, everything else a student does day-to-day lives under "Study." Settings
+// is deliberately not here — it lives next to sign-out in the user section below, where
+// account-level actions conventionally live.
+const NAV_GROUPS = [
+  {
+    label: null,
+    items: [
+      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/assistant', label: 'AI Tutor',  icon: Brain           },
+    ],
+  },
+  {
+    label: 'Study',
+    items: [
+      { href: '/materials',  label: 'Study Materials', icon: BookOpen       },
+      { href: '/flashcards', label: 'Flashcards',      icon: FlipHorizontal },
+      { href: '/quizzes',    label: 'Quizzes',         icon: CircleHelp     },
+      { href: '/planner',    label: 'Planner',         icon: CalendarDays   },
+      { href: '/subjects',   label: 'Subjects',        icon: Layers         },
+    ],
+  },
 ]
 
 export function Sidebar() {
@@ -113,33 +126,42 @@ export function Sidebar() {
               </div>
 
               {/* Nav */}
-              <nav className="flex-1 px-2 pt-2 space-y-0.5 overflow-y-auto no-scrollbar">
-                {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-                  const active = pathname === href || pathname.startsWith(href + '/')
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      onClick={handleNavClick}
-                      className={cn(
-                        'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
-                        'transition-all duration-200 group relative min-h-[44px]',
-                        active
-                          ? 'active-nav-item text-primary'
-                          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                      )}
-                    >
-                      <Icon
-                        className={cn(
-                          'shrink-0 transition-colors',
-                          active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
-                        )}
-                        size={18}
-                      />
-                      <span className="truncate">{label}</span>
-                    </Link>
-                  )
-                })}
+              <nav className="flex-1 px-2 pt-2 space-y-3 overflow-y-auto no-scrollbar">
+                {NAV_GROUPS.map((group, i) => (
+                  <div key={group.label ?? `group-${i}`} className="space-y-0.5">
+                    {group.label && (
+                      <p className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                        {group.label}
+                      </p>
+                    )}
+                    {group.items.map(({ href, label, icon: Icon }) => {
+                      const active = pathname === href || pathname.startsWith(href + '/')
+                      return (
+                        <Link
+                          key={href}
+                          href={href}
+                          onClick={handleNavClick}
+                          className={cn(
+                            'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
+                            'transition-all duration-200 group relative min-h-[44px]',
+                            active
+                              ? 'active-nav-item text-primary'
+                              : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                          )}
+                        >
+                          <Icon
+                            className={cn(
+                              'shrink-0 transition-colors',
+                              active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+                            )}
+                            size={18}
+                          />
+                          <span className="truncate">{label}</span>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                ))}
               </nav>
 
               <Separator />
@@ -154,6 +176,14 @@ export function Sidebar() {
                     <p className="text-sm font-medium text-foreground truncate">{user?.name ?? 'Student'}</p>
                     <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
+                  <Link
+                    href="/settings"
+                    onClick={handleNavClick}
+                    className="text-muted-foreground hover:text-foreground transition-colors p-1.5 shrink-0"
+                    title="Settings"
+                  >
+                    <Settings size={15} />
+                  </Link>
                   <Button
                     variant="ghost"
                     size="icon-sm"
@@ -250,37 +280,47 @@ export function Sidebar() {
       )}
 
       {/* Nav */}
-      <nav className="flex-1 px-2 pt-2 space-y-0.5 overflow-y-auto no-scrollbar">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(href + '/')
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
-                'transition-all duration-200 group relative min-h-[44px]',
-                active
-                  ? 'active-nav-item text-primary'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-              )}
-            >
-              <Icon
-                className={cn(
-                  'shrink-0 transition-colors',
-                  active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
-                )}
-                size={18}
-              />
-              {sidebarOpen && <span className="truncate">{label}</span>}
-              {!sidebarOpen && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-popover border border-border rounded-md text-xs text-foreground whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-xl">
-                  {label}
-                </div>
-              )}
-            </Link>
-          )
-        })}
+      <nav className="flex-1 px-2 pt-2 space-y-3 overflow-y-auto no-scrollbar">
+        {NAV_GROUPS.map((group, i) => (
+          <div key={group.label ?? `group-${i}`} className="space-y-0.5">
+            {group.label && sidebarOpen && (
+              <p className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                {group.label}
+              </p>
+            )}
+            {group.label && !sidebarOpen && <Separator className="my-2" />}
+            {group.items.map(({ href, label, icon: Icon }) => {
+              const active = pathname === href || pathname.startsWith(href + '/')
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
+                    'transition-all duration-200 group relative min-h-[44px]',
+                    active
+                      ? 'active-nav-item text-primary'
+                      : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      'shrink-0 transition-colors',
+                      active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+                    )}
+                    size={18}
+                  />
+                  {sidebarOpen && <span className="truncate">{label}</span>}
+                  {!sidebarOpen && (
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-popover border border-border rounded-md text-xs text-foreground whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-xl">
+                      {label}
+                    </div>
+                  )}
+                </Link>
+              )
+            })}
+          </div>
+        ))}
       </nav>
 
       <Separator />
@@ -297,6 +337,18 @@ export function Sidebar() {
                 <p className="text-sm font-medium text-foreground truncate">{user?.name ?? 'Student'}</p>
                 <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
               </div>
+              <Link
+                href="/settings"
+                className={cn(
+                  'p-1.5 rounded-lg transition-colors shrink-0',
+                  pathname === '/settings'
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+                title="Settings"
+              >
+                <Settings size={15} />
+              </Link>
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -318,6 +370,18 @@ export function Sidebar() {
             <Avatar className="w-8 h-8">
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
+            <Link
+              href="/settings"
+              className={cn(
+                'p-1.5 rounded-lg transition-colors',
+                pathname === '/settings'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+              title="Settings"
+            >
+              <Settings size={15} />
+            </Link>
             <Button
               variant="ghost"
               size="icon-sm"

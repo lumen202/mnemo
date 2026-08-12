@@ -40,6 +40,7 @@ create table if not exists public.notification_prefs (
 
 alter table public.notification_prefs enable row level security;
 
+drop policy if exists "Users can manage own notification prefs" on public.notification_prefs;
 create policy "Users can manage own notification prefs"
   on public.notification_prefs for all
   using (auth.uid() = user_id)
