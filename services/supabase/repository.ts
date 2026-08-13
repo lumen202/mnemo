@@ -498,6 +498,11 @@ export async function updateQuizScore(id: string, score: number, completedAt: st
   return toQuiz(data)
 }
 
+export async function deleteQuiz(id: string): Promise<void> {
+  const { error } = await supabase.from('quizzes').delete().eq('id', id)
+  if (error) throw error
+}
+
 // ─── Study Sessions ───────────────────────────────────────────────────────────
 
 export async function getSessions(userId: string, page?: PageOptions): Promise<StudySession[]> {

@@ -1,8 +1,9 @@
 'use client'
 import { useState } from 'react'
-import { CircleHelp, Sparkles, CheckCircle, XCircle, Trophy, RotateCcw, ChevronRight, Loader2, LayoutGrid, Layers, BookOpen } from 'lucide-react'
+import { CircleHelp, Sparkles, CheckCircle, XCircle, Trophy, RotateCcw, ChevronRight, Loader2, LayoutGrid, Layers, BookOpen, Trash2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/common/EmptyState'
+import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -339,13 +340,28 @@ function GenerateBanner({ onGenerated }: { onGenerated: (quiz: Quiz) => void }) 
 // ─── Quiz Card ────────────────────────────────────────────────────────────────
 
 function QuizCard({ quiz, onStart }: { quiz: Quiz; onStart: (quiz: Quiz) => void }) {
+  const { deleteQuiz } = useQuizStore()
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const meta = SUBJECT_META[quiz.subjectId]
   const score = quiz.score
   const isCompleted = score !== undefined
   const scoreColor = !isCompleted ? '' : score >= 90 ? 'text-emerald-400' : score >= 70 ? 'text-primary' : 'text-amber-400'
 
   return (
-    <Card className="p-5 flex flex-col gap-4 hover:bg-accent transition-colors">
+    <>
+    <Card className="group relative p-5 flex flex-col gap-4 hover:bg-accent transition-colors">
+      <Button
+        size="icon-sm"
+        variant="ghost"
+        className="absolute top-3 right-3 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={(e) => {
+          e.stopPropagation()
+          setDeleteOpen(true)
+        }}
+        title="Delete quiz"
+      >
+        <Trash2 size={13} />
+      </Button>
       <div className="flex items-start justify-between">
         <div
           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
@@ -382,6 +398,15 @@ function QuizCard({ quiz, onStart }: { quiz: Quiz; onStart: (quiz: Quiz) => void
         </Button>
       </div>
     </Card>
+    <ConfirmDialog
+      open={deleteOpen}
+      onOpenChange={setDeleteOpen}
+      title="Delete quiz?"
+      description={`Delete "${quiz.title}"? ${isCompleted ? 'Your score for it will be lost. ' : ''}This cannot be undone.`}
+      confirmLabel="Delete"
+      onConfirm={() => deleteQuiz(quiz.id)}
+    />
+    </>
   )
 }
 

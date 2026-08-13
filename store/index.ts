@@ -26,6 +26,7 @@ import {
   deleteFlashcard as removeFlashcard,
   createQuiz as insertQuiz,
   updateQuizScore as setQuizScore,
+  deleteQuiz as removeQuiz,
   createSession as insertSession,
   upsertGoal as insertGoal,
   updateGoal as editGoal,
@@ -347,6 +348,7 @@ interface QuizState {
   setActiveQuiz: (quiz: Quiz | null) => void
   addQuiz: (q: Quiz) => Promise<void>
   updateQuizScore: (id: string, score: number) => Promise<void>
+  deleteQuiz: (id: string) => Promise<void>
   loadQuizzes: (userId: string) => Promise<void>
 }
 
@@ -389,6 +391,16 @@ export const useQuizStore = create<QuizState>((set) => ({
     }))
     if (isSupabaseConfigured()) {
       await setQuizScore(id, score, new Date().toISOString())
+    }
+  },
+
+  deleteQuiz: async (id) => {
+    set((state) => ({
+      quizzes: state.quizzes.filter((q) => q.id !== id),
+      activeQuiz: state.activeQuiz?.id === id ? null : state.activeQuiz,
+    }))
+    if (isSupabaseConfigured()) {
+      await removeQuiz(id)
     }
   },
 }))
@@ -635,6 +647,12 @@ interface UIState {
   commandPaletteOpen: boolean
   theme: Theme
   toasts: ToastMessage[]
+  // True once HydrateStores' initial post-login load has actually resolved (via
+  // Promise.all, not inferred from catching a per-store isLoading flag mid-flicker
+  // — for a fast/empty account every store's isLoading can flip true→false within
+  // one React batch, so a render-observed latch can wait forever for a transition
+  // that never becomes visible). See DashboardContent.
+  storesHydrated: boolean
   toggleSidebar: () => void
   setSidebarOpen: (v: boolean) => void
   setIsMobile: (v: boolean) => void
@@ -645,6 +663,7 @@ interface UIState {
   setTheme: (t: Theme) => void
   addToast: (toast: Omit<ToastMessage, 'id'>) => void
   removeToast: (id: string) => void
+  setStoresHydrated: (v: boolean) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -656,6 +675,7 @@ export const useUIStore = create<UIState>((set) => ({
   commandPaletteOpen: false,
   theme: 'dark',
   toasts: [],
+  storesHydrated: false,
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
   setIsMobile: (isMobile) => set({ isMobile }),
@@ -663,6 +683,7 @@ export const useUIStore = create<UIState>((set) => ({
   setLogSessionOpen: (logSessionOpen) => set({ logSessionOpen }),
   setAddGoalOpen: (addGoalOpen) => set({ addGoalOpen }),
   setCommandPaletteOpen: (commandPaletteOpen) => set({ commandPaletteOpen }),
+  setStoresHydrated: (storesHydrated) => set({ storesHydrated }),
   setTheme: (theme) => set({ theme }),
   addToast: (toast) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`

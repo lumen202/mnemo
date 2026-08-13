@@ -1,8 +1,9 @@
 'use client'
 import { useState } from 'react'
-import { Sparkles, FlipHorizontal, ChevronLeft, ChevronRight, RotateCcw, Check, X, Filter, Loader2, CalendarClock, Layers } from 'lucide-react'
+import { Sparkles, FlipHorizontal, ChevronLeft, ChevronRight, RotateCcw, Check, X, Filter, Loader2, CalendarClock, Layers, Trash2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/common/EmptyState'
+import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { SkeletonCard, SkeletonStats } from '@/components/common/Skeleton'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -385,6 +386,62 @@ function buildDecks(cards: Flashcard[]): Deck[] {
     .sort((a, b) => b.dueCount - a.dueCount || b.cards.length - a.cards.length)
 }
 
+function FlashcardRow({ card, showSubject }: { card: Flashcard; showSubject: boolean }) {
+  const { deleteFlashcard } = useFlashcardStore()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const diff = DIFFICULTY_CONFIG[card.difficulty]
+
+  return (
+    <>
+      <Card className="group p-4 hover:bg-accent transition-colors">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground mb-1">{card.front}</p>
+            <p className="text-xs text-muted-foreground line-clamp-1">{card.back}</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium capitalize', diff.bg, diff.color)}>
+              {card.difficulty}
+            </span>
+            {showSubject && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-accent text-muted-foreground">
+                {SUBJECT_META[card.subjectId]?.label}
+              </span>
+            )}
+            <span className="text-xs text-muted-foreground">{card.timesReviewed}× reviewed</span>
+            <span
+              className={cn(
+                'text-xs px-2 py-0.5 rounded-full font-medium',
+                isDue(card) ? 'bg-amber-500/15 text-amber-400' : 'bg-accent text-muted-foreground'
+              )}
+              title={card.nextReview ? `Next review ${card.nextReview}` : 'Never reviewed'}
+            >
+              {isDue(card) ? 'Due' : `Next ${card.nextReview}`}
+            </span>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              className="text-muted-foreground hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => setDeleteOpen(true)}
+              title="Delete card"
+            >
+              <Trash2 size={13} />
+            </Button>
+          </div>
+        </div>
+      </Card>
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete flashcard?"
+        description="This card and its review history will be permanently removed. This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={() => deleteFlashcard(card.id)}
+      />
+    </>
+  )
+}
+
 function DeckCard({ deck, onStudy }: { deck: Deck; onStudy: () => void }) {
   // Difficulty mix drives a 3-segment bar — a quick read of how hard a deck is.
   const mix = (['easy', 'medium', 'hard'] as const).map((d) => ({
@@ -596,39 +653,9 @@ export default function FlashcardsPage() {
           Cards in {activeLabel}
         </h2>
         <div className="space-y-2">
-          {filtered.map((card) => {
-            const diff = DIFFICULTY_CONFIG[card.difficulty]
-            return (
-              <Card key={card.id} className="p-4 hover:bg-accent transition-colors">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground mb-1">{card.front}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-1">{card.back}</p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium capitalize', diff.bg, diff.color)}>
-                      {card.difficulty}
-                    </span>
-                    {activeDeck === 'all' && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-accent text-muted-foreground">
-                        {SUBJECT_META[card.subjectId]?.label}
-                      </span>
-                    )}
-                    <span className="text-xs text-muted-foreground">{card.timesReviewed}× reviewed</span>
-                    <span
-                      className={cn(
-                        'text-xs px-2 py-0.5 rounded-full font-medium',
-                        isDue(card) ? 'bg-amber-500/15 text-amber-400' : 'bg-accent text-muted-foreground'
-                      )}
-                      title={card.nextReview ? `Next review ${card.nextReview}` : 'Never reviewed'}
-                    >
-                      {isDue(card) ? 'Due' : `Next ${card.nextReview}`}
-                    </span>
-                  </div>
-                </div>
-              </Card>
-            )
-          })}
+          {filtered.map((card) => (
+            <FlashcardRow key={card.id} card={card} showSubject={activeDeck === 'all'} />
+          ))}
         </div>
       </div>
       </>

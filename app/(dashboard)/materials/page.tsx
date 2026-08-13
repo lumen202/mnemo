@@ -254,27 +254,6 @@ export default function MaterialsPage() {
         />
       </div>
 
-      {/* Upload banner */}
-      <Card className="p-5">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
-              <Upload className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground mb-1">Upload Study Materials</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Upload PDFs, lecture notes, or paste text — Mnemo AI will instantly summarize, generate flashcards, and extract key concepts.
-              </p>
-            </div>
-          </div>
-          <Button onClick={() => setAddMaterialOpen(true)} size="sm" className="shrink-0 gap-1.5">
-            <Plus size={14} />
-            Upload
-          </Button>
-        </div>
-      </Card>
-
       {/* Materials table */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-5 gap-4 flex-wrap">
@@ -294,10 +273,12 @@ export default function MaterialsPage() {
               <ArrowUpDown size={13} />
               {sortDesc ? 'Newest first' : 'Oldest first'}
             </Button>
-            <Button size="sm" onClick={() => setAddMaterialOpen(true)} className="gap-1.5">
-              <Plus size={14} />
-              Upload
-            </Button>
+            {materials.length > 0 && (
+              <Button size="sm" onClick={() => setAddMaterialOpen(true)} className="gap-1.5">
+                <Plus size={14} />
+                Upload
+              </Button>
+            )}
           </div>
         </div>
 

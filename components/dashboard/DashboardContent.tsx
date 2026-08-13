@@ -1,6 +1,5 @@
 'use client'
-import { useRef } from 'react'
-import { useAuthStore, useStudyMaterialStore, useStudySessionStore, useFlashcardStore, useQuizStore } from '@/store'
+import { useAuthStore, useStudyMaterialStore, useStudySessionStore, useFlashcardStore, useQuizStore, useUIStore } from '@/store'
 import { DashboardWelcome } from '@/components/dashboard/DashboardWelcome'
 import { PageLoader } from '@/components/common/LoadingSpinner'
 import { StudyStatsCard } from '@/components/dashboard/StudyStatsCard'
@@ -13,22 +12,19 @@ import { ReviewForecast } from '@/components/dashboard/ReviewForecast'
 
 export function DashboardContent() {
   const { isAuthenticated, isLoading: authLoading } = useAuthStore()
-  const { materials, isLoading: materialsLoading } = useStudyMaterialStore()
-  const { sessions, isLoading: sessionsLoading } = useStudySessionStore()
-  const { flashcards, isLoading: flashcardsLoading } = useFlashcardStore()
-  const { quizzes, isLoading: quizzesLoading } = useQuizStore()
+  const { materials } = useStudyMaterialStore()
+  const { sessions } = useStudySessionStore()
+  const { flashcards } = useFlashcardStore()
+  const { quizzes } = useQuizStore()
+  const storesHydrated = useUIStore((s) => s.storesHydrated)
 
-  // Each store's isLoading starts false and only flips true once HydrateStores calls its
-  // load action post-mount — so "not loading, arrays empty" is ambiguous between "confirmed
-  // empty account" and "hasn't started loading yet," and trusting it too early flashes the
-  // welcome screen for returning users with real data. Latch once any load is actually seen
-  // in flight, so "empty" is only trusted after a real fetch has completed at least once.
-  const anyDataLoading = materialsLoading || sessionsLoading || flashcardsLoading || quizzesLoading
-  const hasLoadedOnceRef = useRef(false)
-  if (anyDataLoading) hasLoadedOnceRef.current = true
-  const stillHydrating = authLoading || (isAuthenticated && !hasLoadedOnceRef.current) || anyDataLoading
-
-  if (stillHydrating) {
+  // storesHydrated is set by HydrateStores once its Promise.all of every load
+  // call has actually resolved — not inferred from a per-store isLoading flag,
+  // which for a fast/empty account can flip true→false within a single React
+  // batch and never be visible to a render here at all (see the comment on
+  // storesHydrated in store/index.ts — this replaced exactly that kind of
+  // heuristic after it hung the empty account on this loader forever).
+  if (authLoading || (isAuthenticated && !storesHydrated)) {
     return <PageLoader />
   }
 

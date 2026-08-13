@@ -74,6 +74,28 @@ function stripThinking(text: string): string {
   return out.trim()
 }
 
+// Some free-tier models ignore the "never output internal reasoning" system
+// instruction and narrate their scratchpad as plain prose instead of using
+// <think> tags — no delimiter, so stripThinking() can't touch it. This can't
+// be salvaged by stripping (the reasoning trace often never actually reaches
+// a real answer — see the incident this was written from), only recognized
+// and replaced. Anchored to the START of the trimmed text only, so a
+// legitimate multi-step explanation that happens to use headers/analysis
+// later in the response is never falsely flagged.
+const LEAKED_REASONING_OPENERS = [
+  /^here'?s (a|my) (thinking process|reasoning|internal)/i,
+  /^let me (think|analyze|work through) (this|about)/i,
+  /^(okay|ok|alright),? let'?s (think|analyze)/i,
+  /^i need to (analyze|figure out|determine) (the|what)/i,
+  /^analyz(e|ing) (the )?user('s)? (input|message|request)/i,
+  /^identify(ing)? the (issue|problem|intent)/i,
+]
+
+function looksLikeLeakedReasoning(text: string): boolean {
+  const head = text.trimStart().slice(0, 80)
+  return LEAKED_REASONING_OPENERS.some((re) => re.test(head))
+}
+
 export function ChatInterface() {
   // Selector subscriptions instead of a whole-store destructure — this
   // component only re-renders on the specific fields it reads, not on every
@@ -89,7 +111,7 @@ export function ChatInterface() {
   const { addQuiz, quizzes } = useQuizStore()
   const { materials } = useStudyMaterialStore()
   const { subjects } = useSubjectStore()
-  const { sessions: studySessions } = useStudySessionStore()
+  const { sessions: studySessions, goals } = useStudySessionStore()
   const [input, setInput] = useState('')
   // Sessions with tokens actively streaming in — a Set so multiple background
   // chats can be mid-flight without blocking each other's input.
@@ -127,8 +149,8 @@ export function ChatInterface() {
 
   // Same store snapshot, reshaped for the scripted tool router below.
   const toolContext = useMemo(
-    () => ({ materials, subjects, sessions: studySessions, flashcards, quizzes }),
-    [materials, subjects, studySessions, flashcards, quizzes]
+    () => ({ materials, subjects, sessions: studySessions, flashcards, quizzes, goals }),
+    [materials, subjects, studySessions, flashcards, quizzes, goals]
   )
 
   const generateFlashcardsForTopic = async (topic: string, sessionId: string) => {
@@ -416,19 +438,37 @@ export function ChatInterface() {
         const reader = res.body.getReader()
         const decoder = new TextDecoder()
         let raw = ''
+        let isLeakedReasoning = false
 
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
           raw += decoder.decode(value, { stream: true })
+
+          // Checked once there's enough text to match an opener against, then
+          // latched — a model that starts by narrating its reasoning doesn't
+          // stop, so there's no point re-checking every chunk.
+          if (!isLeakedReasoning && raw.trimStart().length >= 20) {
+            isLeakedReasoning = looksLikeLeakedReasoning(raw)
+          }
+
+          if (isLeakedReasoning) {
+            // Keep the typing indicator up rather than streaming a leaked
+            // scratchpad live — the whole point is the student never sees it.
+            continue
+          }
+
           const display = stripThinking(raw)
           updateMessage(assistantId, display || '…', sessionId)
         }
 
-        const final = stripThinking(raw)
+        const final = isLeakedReasoning ? '' : stripThinking(raw)
         updateMessage(
           assistantId,
-          final || 'I had trouble generating a response. Please try again.',
+          final ||
+            (isLeakedReasoning
+              ? "I had trouble generating that response — the model got stuck reasoning out loud instead of answering. Please try again."
+              : 'I had trouble generating a response. Please try again.'),
           sessionId
         )
       } else {

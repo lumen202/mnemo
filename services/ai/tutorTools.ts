@@ -1,7 +1,8 @@
 import { SUBJECT_META } from '@/data/mockData'
 import { computeStudyAnalytics, computeLearningScore } from '@/utils/analytics'
 import { isDue } from '@/utils/srs'
-import type { StudyMaterial, Subject, StudySession, Flashcard, Quiz } from '@/types'
+import { formatHours, formatDate } from '@/utils/formatters'
+import type { StudyMaterial, Subject, StudySession, Flashcard, Quiz, StudyGoal } from '@/types'
 
 /**
  * Scripted tutor tools — the "AI explains, math computes" invariant applied to
@@ -19,6 +20,7 @@ export interface TutorToolContext {
   sessions: StudySession[]
   flashcards: Flashcard[]
   quizzes: Quiz[]
+  goals: StudyGoal[]
 }
 
 interface TutorTool {
@@ -130,6 +132,77 @@ const TOOLS: TutorTool[] = [
         return `All **${materials.length}** of your materials have been summarized. **${mastered}** are marked mastered.`
       }
       return `You have **${pending}** material${pending !== 1 ? 's' : ''} not yet summarized out of **${materials.length}** total.\n\n[→ Review materials](/materials)`
+    },
+  },
+  {
+    // Added after an incident where a free model's raw chain-of-thought leaked
+    // into the chat in response to exactly this question — a canned identity
+    // answer can't leak reasoning because there's no generation step at all.
+    id: 'identity',
+    match: (m) =>
+      /^(what|who) are you\??$|^what('?s| is) mnemo\??$|^what can you (do|help with)\??$|^tell me about (yourself|mnemo)\??$/i.test(
+        m.trim()
+      ),
+    run: () =>
+      `I'm **Mnemo** — your AI study companion. I can explain concepts, generate flashcards and quizzes from what you're studying, answer questions about your own progress (streak, what's due, weak subjects), and look up real sources (Wikipedia, Wiktionary, arXiv) instead of guessing.\n\nTry something like *"quiz me on binary search trees"* or *"what's due today"*.`,
+  },
+  {
+    id: 'list-subjects',
+    match: (m) => /^(what|which) (are my |)subjects\b|^(my )?subjects( list)?\??$|list (my )?subjects/i.test(m),
+    run: ({ subjects }) => {
+      if (subjects.length === 0) {
+        return `You haven't added any subjects yet.\n\n[→ Add one](/subjects)`
+      }
+      const list = subjects
+        .map((s) => `- **${SUBJECT_META[s.slug]?.label ?? s.name}** — ${formatHours(s.completedHours)} of ${formatHours(s.targetHours)}`)
+        .join('\n')
+      return `You're tracking **${subjects.length}** subject${subjects.length !== 1 ? 's' : ''}:\n\n${list}\n\n[→ View subjects](/subjects)`
+    },
+  },
+  {
+    id: 'strongest-subject',
+    match: (m) => /what am i (best|good) at|strongest subject|what('?s| is) my strongest subject|furthest ahead/i.test(m),
+    run: ({ subjects }) => {
+      const ahead = [...subjects]
+        .filter((s) => s.targetHours > 0)
+        .sort((a, b) => b.completedHours / b.targetHours - a.completedHours / a.targetHours)[0]
+      if (!ahead) {
+        return `You don't have any subjects with a target set yet.\n\n[→ Add one](/subjects)`
+      }
+      const label = SUBJECT_META[ahead.slug]?.label ?? ahead.name
+      return `**${label}** is your strongest right now — ${formatHours(ahead.completedHours)} of your ${formatHours(ahead.targetHours)} target (${pct(ahead.completedHours, ahead.targetHours)}%). Nice work.\n\n[→ View subjects](/subjects)`
+    },
+  },
+  {
+    id: 'weekly-hours',
+    match: (m) => /how many hours.*(this week|past week|last 7 days)|(hours|time) studied this week|study time this week/i.test(m),
+    run: ({ sessions }) => {
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+      const recent = sessions.filter((s) => new Date(s.date) >= sevenDaysAgo)
+      if (recent.length === 0) {
+        return `No study sessions logged in the last 7 days.\n\n[→ Log a session](/planner)`
+      }
+      const hours = recent.reduce((sum, s) => sum + s.durationMinutes / 60, 0)
+      return `You've studied **${formatHours(hours)}** over the last 7 days, across **${recent.length}** session${recent.length !== 1 ? 's' : ''}.\n\n[→ View planner](/planner)`
+    },
+  },
+  {
+    id: 'goals',
+    match: (m) => /(my |what are my |show my )?goals\b|what am i working towards/i.test(m),
+    run: ({ goals }) => {
+      if (goals.length === 0) {
+        return `You don't have any study goals set yet.\n\n[→ Add one](/planner)`
+      }
+      const active = goals.filter((g) => !g.completed)
+      const completed = goals.filter((g) => g.completed)
+      if (active.length === 0) {
+        return `All **${completed.length}** of your goals are complete. Nice work — set a new one to keep the momentum going.\n\n[→ Add a goal](/planner)`
+      }
+      const list = active
+        .map((g) => `- **${g.title}** — ${g.progress}% complete, due ${formatDate(g.targetDate)}`)
+        .join('\n')
+      return `You have **${active.length}** active goal${active.length !== 1 ? 's' : ''}:\n\n${list}\n\n[→ View planner](/planner)`
     },
   },
 ]

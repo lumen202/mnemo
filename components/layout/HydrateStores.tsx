@@ -48,13 +48,20 @@ export function HydrateStores({ children }: { children: React.ReactNode }) {
         useAIStore.getState().reset()
       }
       prevUserId.current = user.id
-      loadSubjects(user.id)
-      loadMaterials(user.id)
-      loadFlashcards(user.id)
-      loadQuizzes(user.id)
-      loadSessions(user.id)
-      loadGoals(user.id)
-      loadInsights(user.id)
+      useUIStore.getState().setStoresHydrated(false)
+      // Promise.all + an explicit flag instead of firing these and letting consumers
+      // infer completion from each store's own isLoading — for a fast/empty account
+      // every isLoading can flip true→false inside one React batch, invisible to any
+      // render, so DashboardContent needs a signal that's set on real completion.
+      Promise.all([
+        loadSubjects(user.id),
+        loadMaterials(user.id),
+        loadFlashcards(user.id),
+        loadQuizzes(user.id),
+        loadSessions(user.id),
+        loadGoals(user.id),
+        loadInsights(user.id),
+      ]).finally(() => useUIStore.getState().setStoresHydrated(true))
     }
   }, [isAuthenticated, user, loadSubjects, loadMaterials, loadFlashcards, loadQuizzes, loadSessions, loadGoals, loadInsights])
 
